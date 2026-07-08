@@ -253,6 +253,31 @@ export default function EmployeeForm({ employee, onClose, onSuccess, mode = 'mod
         <Field label="Email" required>
           <input type="email" name="email" value={form.email} onChange={set} placeholder="nom@entreprise.com" className={inputCls} required />
         </Field>
+
+        {/* Sexe — boutons radio visuels */}
+        <Field label="Sexe" required>
+          <div className="flex gap-2 mt-0.5">
+            {[
+              { value: 'M', label: 'Masculin', icon: 'male' },
+              { value: 'F', label: 'Féminin', icon: 'female' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, sex: opt.value }))}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-body-md font-medium transition-all ${
+                  form.sex === opt.value
+                    ? 'border-primary bg-primary-container text-on-primary-container'
+                    : 'border-outline-variant bg-surface text-secondary hover:border-outline hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{opt.icon}</span>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="Téléphone">
           <input name="phone1" value={form.phone1} onChange={set} placeholder="+228" className={inputCls} />
         </Field>
@@ -335,13 +360,18 @@ export default function EmployeeForm({ employee, onClose, onSuccess, mode = 'mod
     ? new Date(new Date(form.contractStartDate).getTime() + trialDays * 86400000).toLocaleDateString('fr-FR')
     : null
 
+  const isFemale = form.sex === 'F'
+  const salarieTxt = isFemale ? 'la Salariée' : 'le Salarié'
+  const denomme = isFemale ? 'dénommée' : 'dénommé'
+  const ilElle = isFemale ? 'Elle' : 'Il'
+
   const contractPreview = `Le présent Contrat de Travail (« Contrat ») est conclu et prend effet le ${form.contractStartDate || '___'}, entre :
 
 ${form.position || 'L\'Employeur'}, ci-après dénommé « l'Employeur » ;
 
 et
 
-${form.firstName || '___'} ${form.lastName || '___'}, ci-après dénommé(e) « le Salarié » ;
+${form.firstName || '___'} ${form.lastName || '___'}, ci-après ${denomme} « ${salarieTxt} » ;
 
 Ci-après collectivement dénommés « les Parties ».`
 
@@ -458,7 +488,12 @@ Ci-après collectivement dénommés « les Parties ».`
             </button>
           </div>
           <div className="px-4 py-3 grid grid-cols-2 gap-y-2 text-body-md">
-            <div className="text-secondary">Prénom</div><div className="text-on-surface">{form.firstName} {form.lastName}</div>
+            <div className="text-secondary">Prénom & Nom</div><div className="text-on-surface">{form.firstName} {form.lastName}</div>
+            <div className="text-secondary">Sexe</div>
+            <div className="text-on-surface flex items-center gap-1">
+              <span className="material-symbols-outlined text-[15px] text-primary">{form.sex === 'F' ? 'female' : 'male'}</span>
+              {form.sex === 'F' ? 'Féminin' : 'Masculin'}
+            </div>
             <div className="text-secondary">Email</div><div className="text-on-surface">{form.email}</div>
           </div>
         </div>
