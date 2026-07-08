@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  password    String
+  role        String   // ADMIN, RH, ASSISTANT, STAFF
+  displayName String?
+  department  String?
+  photoPath   String?
+  createdAt   DateTime @default(now())
+}
+
+model Employee {
+  id            Int      @id @default(autoincrement())
+  matricule     String   @unique
+  firstName     String
+  lastName      String
+  sex           String?
+  nationality   String?
+  birthDate     DateTime?
+  birthPlace    String?
+  maritalStatus String?
+  childrenCount Int?
+  address       String?
+  city          String?
+  country       String?
+  phone1        String?
+  phone2        String?
+  email         String
+
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+
+  nationalId           String?
+  passportNumber       String?
+  socialSecurityNumber String?
+  taxId                String?
+  employmentType       String?
+  workLocation         String?
+  baseSalary           Float?
+  transportAllowance   Float?
+  housingAllowance     Float?
+  positionAllowance    Float?
+  probationEndDate     DateTime?
+
+  hireDate   DateTime?
+  position   String?
+  department String?
+  service    String?
+  manager    String?
+  category   String?
+  status     String   @default("ACTIVE")
+  bankName      String?
+  accountNumber String?
+  iban          String?
+  swift         String?
+  photoPath     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contracts   Contract[]
+  leaves      Leave[]
+  attendances Attendance[]
+  trainings   Training[]
+  medicals    MedicalVisit[]
+  documents   Document[]
+}
+
+model Contract {
+  id           Int       @id @default(autoincrement())
+  contractNo   String    @unique
+  employeeId   Int
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type         String
+  position     String
+  department   String
+  salary       Float
+  bonus        Float?
+  startDate    DateTime
+  endDate      DateTime?
+  trialEndDate DateTime?
+  workHours       String?
+  workerCategory  String?
+  annualLeaveDays Int?
+  currency        String?
+  language        String?
+  payFrequency    String?
+  workDaysPerWeek Int?
+  status          String    @default("ACTIVE")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Leave {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type       String
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime
+  checkIn    String?
+  checkOut   String?
+  isLate     Boolean  @default(false)
+  overtime   Float?
+  absence    Boolean  @default(false)
+}
+
+model Training {
+  id             Int       @id @default(autoincrement())
+  employeeId     Int
+  employee       Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title          String
+  organization   String
+  date           DateTime
+  cost           Float?
+  certificate    Boolean   @default(false)
+  duration       Int?
+  score          Float?
+  comment        String?
+  category       String?
+  expirationDate DateTime?
+  certFilePath   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model MedicalVisit {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       DateTime
+  doctor     String?
+  center     String?
+  result     String?
+  nextVisit  DateTime?
+}
+
+model Document {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name       String
+  type       String
+  category   String
+  path       String
+  expiryDate DateTime?
+  status     String    @default("ACTIVE")
+  tags       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Setting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+model PayrollCycle {
+  id         Int                 @id @default(autoincrement())
+  month      Int
+  year       Int
+  status     String              @default("DRAFT")
+  totalGross Float               @default(0)
+  totalCnss  Float               @default(0)
+  totalTax   Float               @default(0)
+  totalNet   Float               @default(0)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  entries    PayrollCycleEntry[]
+
+  @@unique([month, year])
+}
+
+model PayrollCycleEntry {
+  id                Int          @id @default(autoincrement())
+  cycleId           Int
+  cycle             PayrollCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employeeId        Int
+  matricule         String
+  firstName         String
+  lastName          String
+  department        String       @default("")
+  position          String       @default("")
+  base              Float        @default(0)
+  transport         Float        @default(0)
+  housing           Float        @default(0)
+  positionAllowance Float        @default(0)
+  gross             Float        @default(0)
+  cnss              Float        @default(0)
+  tax               Float        @default(0)
+  net               Float        @default(0)
+  createdAt         DateTime     @default(now())
+}

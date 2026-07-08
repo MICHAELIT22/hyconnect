@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-background text-on-surface font-sans;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  input, textarea, select { @apply outline-none; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-on-primary px-3 py-1.5 rounded-lg text-label-md
+           hover:bg-primary-fixed-variant active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5;
+  }
+  .btn-secondary {
+    @apply bg-surface text-on-surface px-3 py-1.5 rounded-lg text-label-md
+           border border-outline-variant hover:bg-surface-container-low active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5;
+  }
+  .btn-danger {
+    @apply bg-error text-on-error px-3 py-1.5 rounded-lg text-label-md font-medium
+           hover:opacity-90 active:scale-95 transition-all duration-150 flex items-center gap-1.5;
+  }
+  .btn-outline {
+    @apply bg-transparent text-secondary px-4 py-1.5 rounded-lg text-body-md font-medium
+           border border-outline hover:bg-surface-container-low active:scale-95 transition-all duration-150
+           flex items-center gap-1.5;
+  }
+  .card {
+    @apply bg-surface rounded-xl shadow-level-1 p-3 border border-outline-variant;
+  }
+  .input-field {
+    @apply w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg
+           text-body-md text-on-surface placeholder:text-secondary
+           focus:border-primary focus:ring-2 focus:ring-primary/20
+           transition-colors duration-150;
+  }
+  .label {
+    @apply block text-label-md font-medium text-on-surface-variant mb-1;
+  }
+  .badge-active {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-success-container text-success;
+  }
+  .badge-inactive {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-error-container text-error;
+  }
+  .badge-pending {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-caption font-medium bg-warning-container text-warning;
+  }
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
