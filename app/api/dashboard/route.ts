@@ -70,18 +70,23 @@ export async function GET() {
     const [
       { data: recentContracts },
       { data: recentEmps },
-      { count: empNoContract },
+      { data: activeEmpsForContract },
+      { data: empContractIds },
       { count: empMissingInfo },
       { data: companySettings },
       { data: birthdayEmps },
     ] = await Promise.all([
       sb.from('Contract').select('contractNo, createdAt, Employee(firstName, lastName)').order('createdAt', { ascending: false }).limit(3),
       sb.from('Employee').select('firstName, lastName, createdAt').order('createdAt', { ascending: false }).limit(3),
-      sb.from('Employee').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE').is('contracts', null),
+      sb.from('Employee').select('id').eq('status', 'ACTIVE'),
+      sb.from('Contract').select('employeeId').eq('status', 'ACTIVE'),
       sb.from('Employee').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE').or('nationalId.is.null,nationalId.eq.,socialSecurityNumber.is.null,socialSecurityNumber.eq.,accountNumber.is.null,accountNumber.eq.'),
       sb.from('Setting').select('key, value').in('key', ['company_name', 'company_address', 'company_phone', 'company_nif']),
       sb.from('Employee').select('firstName, lastName, birthDate').eq('status', 'ACTIVE'),
     ])
+
+    const empIdsWithContract = new Set((empContractIds ?? []).map((c: any) => c.employeeId))
+    const empNoContract = (activeEmpsForContract ?? []).filter((e: any) => !empIdsWithContract.has(e.id)).length
 
     // Headcount evolution (6 months) — 6 sequential queries
     const headcountEvolution: number[] = []
