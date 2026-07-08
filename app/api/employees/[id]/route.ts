@@ -42,11 +42,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
   const data = await req.json()
 
-  // Filter out contract-only and form-only fields not in Employee table
+  // Strip all non-Employee-table fields (relations, contract fields, form-only)
   const {
     contractType: _ct, contractStartDate: _csd, contractEndDate: _ced,
     trialPeriod: _tp, workerCategory: _wc, annualLeaveDays: _ald,
     currency: _cur, language: _lang, sendInvite: _si,
+    contracts: _contracts, leaves: _leaves, attendances: _att,
+    trainings: _trainings, medicals: _med, documents: _docs,
     ...employeeFields
   } = data
 
