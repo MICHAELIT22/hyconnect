@@ -14,11 +14,9 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '500')
 
   const sb = createAdminClient()
-  let query = sb.from('Employee').select(`
-    id, matricule, firstName, lastName, email, phone1,
-    position, department, status, sex, birthDate, hireDate, photoPath,
-    Contract(type)
-  `).order('createdAt', { ascending: false }).limit(limit)
+  let query = sb.from('Employee').select(
+    'id, matricule, firstName, lastName, email, phone1, position, department, status, sex, birthDate, hireDate, photoPath'
+  ).order('createdAt', { ascending: false }).limit(limit)
 
   if (department) query = query.eq('department', department)
   if (status) query = query.eq('status', status)
@@ -27,9 +25,23 @@ export async function GET(req: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  const empIds = (data || []).map((e: any) => e.id)
+  let contractMap: Record<number, { type: string }[]> = {}
+  if (empIds.length > 0) {
+    const { data: contracts } = await sb
+      .from('Contract')
+      .select('employeeId, type, status')
+      .in('employeeId', empIds)
+      .eq('status', 'ACTIVE')
+    for (const c of contracts ?? []) {
+      if (!contractMap[c.employeeId]) contractMap[c.employeeId] = []
+      contractMap[c.employeeId].push({ type: c.type })
+    }
+  }
+
   let employees = (data || []).map((e: any) => ({
     ...e,
-    contracts: (e.Contract || []).filter((c: any) => c.status === 'ACTIVE').slice(0, 1),
+    contracts: (contractMap[e.id] || []).slice(0, 1),
   }))
 
   if (search) {
