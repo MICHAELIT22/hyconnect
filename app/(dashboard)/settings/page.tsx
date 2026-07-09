@@ -124,12 +124,33 @@ function SettingsInner() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
 
   const logoRef = useRef<HTMLInputElement>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
 
   const ic = 'w-full px-3 py-2 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors'
 
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 1 * 1024 * 1024) { showToast('Fichier trop volumineux (max 1 Mo)', 'error'); return }
+    setLogoUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', 'logos')
+      const { data } = await axios.post('/api/upload', fd)
+      setCompany(c => ({ ...c, company_logo: data.url }))
+      showToast('Logo téléchargé avec succès')
+    } catch {
+      showToast('Erreur lors du téléchargement', 'error')
+    } finally {
+      setLogoUploading(false)
+      if (logoRef.current) logoRef.current.value = ''
+    }
   }
 
   useEffect(() => {
@@ -472,13 +493,17 @@ function SettingsInner() {
                 <div>
                   <button
                     onClick={() => logoRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-outline rounded-lg text-label-md text-on-surface hover:bg-surface-container-low transition-colors"
+                    disabled={logoUploading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-outline rounded-lg text-label-md text-on-surface hover:bg-surface-container-low disabled:opacity-50 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[15px]">upload</span>
-                    Télécharger le logo
+                    {logoUploading
+                      ? <span className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      : <span className="material-symbols-outlined text-[15px]">upload</span>
+                    }
+                    {logoUploading ? 'Téléchargement...' : 'Télécharger le logo'}
                   </button>
                   <p className="text-caption text-secondary mt-1">PNG, JPG, SVG ou WebP. Max 1 Mo.</p>
-                  <input ref={logoRef} type="file" accept="image/*" className="hidden" />
+                  <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                 </div>
               </div>
             </SectionCard>
