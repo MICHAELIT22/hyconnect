@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import useSWR from 'swr'
 import EmployeeForm from '@/components/employees/EmployeeForm'
 
 interface Employee {
@@ -69,8 +70,6 @@ const getSeniority = (hireDate: string) => {
 
 export default function EmployeesPage() {
   const router = useRouter()
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -81,18 +80,8 @@ export default function EmployeesPage() {
   const [showForm, setShowForm] = useState(false)
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null)
 
-  const fetchEmployees = async () => {
-    try {
-      const res = await axios.get('/api/employees?limit=500')
-      setEmployees(res.data)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchEmployees() }, [])
+  const { data: employees = [], isLoading: loading, mutate: mutateEmployees } = useSWR<Employee[]>('/api/employees?limit=500')
+  const fetchEmployees = () => mutateEmployees()
 
   const filtered = useMemo(() => {
     return employees.filter(emp => {

@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Line, Doughnut } from 'react-chartjs-2'
 import '@/lib/chartSetup'
-import axios from 'axios'
+import useSWR from 'swr'
 
 interface DashboardData {
   kpi: {
@@ -57,22 +56,11 @@ function KpiCard({ label, value, icon, colorClass = 'text-on-surface-variant', b
 
 export default function DashboardClient() {
   const router = useRouter()
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    axios.get('/api/dashboard')
-      .then(r => setData(r.data))
-      .catch(e => {
-        const msg = e.response?.data?.error || e.message
-        setError(msg)
-        console.error('[dashboard]', msg)
-      })
-  }, [])
+  const { data, error } = useSWR<DashboardData>('/api/dashboard')
 
   if (error) return (
     <div className="p-4 bg-error-container text-on-error-container rounded-xl text-body-md">
-      <strong>Erreur dashboard :</strong> {error}
+      <strong>Erreur dashboard :</strong> {error.message}
     </div>
   )
   if (!data) return <div className="p-4 text-secondary text-body-md">Chargement...</div>

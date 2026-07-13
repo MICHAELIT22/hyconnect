@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
         <footer className="h-7 bg-surface border-t border-outline-variant flex items-center justify-between px-3 flex-shrink-0">
-          <span className="text-caption text-secondary">HyConnect HRMS v2.0.0</span>
+          <span className="text-caption text-secondary">HyConnect HRMS v1.0.0</span>
           <span className="text-caption text-secondary">© 2026 Hyundai CO-TO AUTO</span>
         </footer>
       </div>

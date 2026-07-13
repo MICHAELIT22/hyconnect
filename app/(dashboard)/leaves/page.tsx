@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import axios from 'axios'
+import useSWR from 'swr'
 
 interface Leave {
   id: number
@@ -23,33 +24,19 @@ const emptyForm = { employeeId: '', type: 'ANNUAL', startDate: '', endDate: '', 
 const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
 
 export default function LeavesPage() {
-  const [leaves, setLeaves] = useState<Leave[]>([])
-  const [employees, setEmployees] = useState<{ id: number; firstName: string; lastName: string; matricule: string }[]>([])
   const [type, setType] = useState('')
   const [status, setStatus] = useState('')
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
-  const fetchLeaves = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (type) params.set('type', type)
-      if (status) params.set('status', status)
-      const res = await axios.get(`/api/leaves?${params}`)
-      setLeaves(res.data)
-    } finally { setLoading(false) }
-  }, [type, status])
+  const leavesUrl = `/api/leaves?${new URLSearchParams({ ...(type && { type }), ...(status && { status }) })}`
+  const { data: leaves = [], isLoading: loading, mutate: mutateLeaves } = useSWR<Leave[]>(leavesUrl)
+  const { data: employees = [] } = useSWR<{ id: number; firstName: string; lastName: string; matricule: string }[]>('/api/employees?limit=500')
 
-  useEffect(() => { fetchLeaves() }, [fetchLeaves])
-
-  useEffect(() => {
-    axios.get('/api/employees?limit=500').then(r => setEmployees(r.data)).catch(() => {})
-  }, [])
+  const fetchLeaves = useCallback(() => mutateLeaves(), [mutateLeaves])
 
   async function updateStatus(id: number, newStatus: string) {
     await axios.put(`/api/leaves/${id}`, { status: newStatus })

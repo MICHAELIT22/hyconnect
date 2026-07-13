@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import axios from 'axios'
+import useSWR from 'swr'
 
 interface Training {
   id: number
@@ -21,10 +22,7 @@ const emptyForm = { employeeId: '', title: '', organization: '', date: '', durat
 const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
 
 export default function TrainingsPage() {
-  const [trainings, setTrainings] = useState<Training[]>([])
-  const [employees, setEmployees] = useState<{ id: number; firstName: string; lastName: string; matricule: string }[]>([])
   const [category, setCategory] = useState('')
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState<typeof emptyForm>(emptyForm)
@@ -32,18 +30,11 @@ export default function TrainingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [search, setSearch] = useState('')
 
-  const fetchTrainings = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (category) params.set('category', category)
-      const res = await axios.get(`/api/trainings?${params}`)
-      setTrainings(res.data)
-    } finally { setLoading(false) }
-  }, [category])
+  const trainingsUrl = `/api/trainings?${new URLSearchParams({ ...(category && { category }) })}`
+  const { data: trainings = [], isLoading: loading, mutate: mutateTrainings } = useSWR<Training[]>(trainingsUrl)
+  const { data: employees = [] } = useSWR<{ id: number; firstName: string; lastName: string; matricule: string }[]>('/api/employees?limit=500')
 
-  useEffect(() => { fetchTrainings() }, [fetchTrainings])
-  useEffect(() => { axios.get('/api/employees?limit=500').then(r => setEmployees(r.data)).catch(() => {}) }, [])
+  const fetchTrainings = useCallback(() => mutateTrainings(), [mutateTrainings])
 
   async function exportCSV() {
     const res = await axios.get('/api/trainings?type=export', { responseType: 'blob' })

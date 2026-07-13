@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import SWRProvider from '@/components/SWRProvider'
 
 export const metadata: Metadata = {
   title: 'HyConnect - RH Manager',
@@ -20,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#1A56DB" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body>{children}</body>
+      <body><SWRProvider>{children}</SWRProvider></body>
     </html>
   )
 }
