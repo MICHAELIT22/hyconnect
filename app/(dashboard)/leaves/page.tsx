@@ -20,6 +20,7 @@ const LEAVE_LABELS: Record<string, string> = {
 }
 
 const emptyForm = { employeeId: '', type: 'ANNUAL', startDate: '', endDate: '', reason: '', status: 'PENDING' }
+const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<Leave[]>([])
