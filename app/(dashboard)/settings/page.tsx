@@ -104,6 +104,7 @@ function SettingsInner() {
   const [showNewUser, setShowNewUser] = useState(false)
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'STAFF', displayName: '', department: '' })
   const [creatingUser, setCreatingUser] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
 
   // Salary
   const [salary, setSalary] = useState<Record<string, string>>({})
@@ -148,6 +149,10 @@ function SettingsInner() {
       if (logoRef.current) logoRef.current.value = ''
     }
   }
+
+  useEffect(() => {
+    axios.get('/api/auth/me').then(r => { if (r.data?.id) setCurrentUserId(r.data.id) }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (section === 'company') {
@@ -671,9 +676,21 @@ function SettingsInner() {
                         <td className="px-4 py-3 text-body-md text-secondary">{user.department || '—'}</td>
                         <td className="px-4 py-3 text-body-md text-secondary">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</td>
                         <td className="px-4 py-3 text-right">
-                          <button onClick={() => deleteUser(user.id)} className="p-1.5 rounded-lg hover:bg-error-container text-secondary hover:text-error transition-colors">
-                            <span className="material-symbols-outlined text-[16px]">delete</span>
-                          </button>
+                          {(() => {
+                            const isSelf = user.id === currentUserId
+                            const isLastAdmin = user.role === 'ADMIN' && users.filter(u => u.role === 'ADMIN').length <= 1
+                            const blocked = isSelf || isLastAdmin
+                            return (
+                              <button
+                                onClick={() => !blocked && deleteUser(user.id)}
+                                disabled={blocked}
+                                title={isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : isLastAdmin ? 'Impossible de supprimer le dernier administrateur' : 'Supprimer'}
+                                className={`p-1.5 rounded-lg transition-colors ${blocked ? 'opacity-30 cursor-not-allowed text-secondary' : 'hover:bg-error-container text-secondary hover:text-error'}`}
+                              >
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
+                              </button>
+                            )
+                          })()}
                         </td>
                       </tr>
                     ))

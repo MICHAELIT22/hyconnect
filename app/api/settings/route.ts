@@ -170,13 +170,23 @@ export async function POST(req: NextRequest) {
   if (action === 'delete_user') {
     const { userId } = data
 
+    // Bloquer la suppression de son propre compte
+    const authUser = auth as { id: number; role: string }
+    if (authUser.id === userId) return NextResponse.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, { status: 400 })
+
     const { data: user, error: fetchErr } = await sb
       .from('User')
-      .select('id,username')
+      .select('id,username,role')
       .eq('id', userId)
       .single()
 
-    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
+    if (fetchErr || !user) return NextResponse.json({ error: fetchErr?.message || 'Utilisateur introuvable' }, { status: 500 })
+
+    // Bloquer la suppression du dernier admin
+    if (user.role === 'ADMIN') {
+      const { count } = await sb.from('User').select('id', { count: 'exact', head: true }).eq('role', 'ADMIN')
+      if ((count ?? 0) <= 1) return NextResponse.json({ error: 'Impossible de supprimer le dernier administrateur' }, { status: 400 })
+    }
 
     if (user) {
       const email = `${user.username}@hyconnect.local`
