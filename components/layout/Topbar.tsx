@@ -103,11 +103,11 @@ export default function Topbar({ user }: { user: User }) {
             onClick={() => { setMenuOpen(m => !m); setQuickOpen(false) }}
             className="flex items-center gap-2 p-1 rounded-lg hover:bg-surface-container-low transition-colors"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 bg-white">
               {photoPath
                 ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
                 : (companyLogo || !logoError)
-                  ? <img src={companyLogo || '/logo.png'} alt="logo" className="w-full h-full object-cover" onError={() => setLogoError(true)} />
+                  ? <img src={companyLogo || '/logo.png'} alt="logo" className="w-full h-full object-contain p-0.5" onError={() => setLogoError(true)} />
                   : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
               }
             </div>
@@ -126,11 +126,11 @@ export default function Topbar({ user }: { user: User }) {
               <div className="absolute right-0 mt-2 w-64 bg-surface rounded-xl shadow-level-1 border border-outline-variant py-1 z-50">
                 {/* Header identité */}
                 <div className="px-4 py-3 border-b border-outline-variant flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 bg-white">
                     {photoPath
                       ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
                       : companyLogo
-                        ? <img src={companyLogo} alt="logo" className="w-full h-full object-cover" />
+                        ? <img src={companyLogo} alt="logo" className="w-full h-full object-contain p-0.5" />
                         : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-md">{displayName.charAt(0).toUpperCase()}</div>
                     }
                   </div>
