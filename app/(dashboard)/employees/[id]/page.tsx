@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import axios from 'axios'
@@ -122,6 +122,20 @@ function EmployeeDetailContent() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  // Congé modal
+  const [showLeave, setShowLeave] = useState(false)
+  const [leaveForm, setLeaveForm] = useState({ type: 'Congé annuel', startDate: '', endDate: '', reason: '' })
+  const [leaveSaving, setLeaveSaving] = useState(false)
+  const [leaveError, setLeaveError] = useState('')
+
+  // Document upload
+  const [showDocModal, setShowDocModal] = useState(false)
+  const [docForm, setDocForm] = useState({ name: '', type: 'Contrat', category: 'RH', expiryDate: '' })
+  const [docFile, setDocFile] = useState<File | null>(null)
+  const [docSaving, setDocSaving] = useState(false)
+  const [docError, setDocError] = useState('')
+  const docFileRef = useRef<HTMLInputElement>(null)
+
   // Départ modal
   const [showDepart, setShowDepart] = useState(false)
   const [depart, setDepart] = useState({
@@ -180,6 +194,39 @@ function EmployeeDetailContent() {
     } finally {
       setDepartSaving(false)
     }
+  }
+
+  const confirmLeave = async () => {
+    if (!leaveForm.startDate || !leaveForm.endDate) { setLeaveError('Dates obligatoires'); return }
+    setLeaveSaving(true); setLeaveError('')
+    try {
+      await axios.post('/api/leaves', { ...leaveForm, employeeId: Number(id) })
+      setShowLeave(false)
+      setLeaveForm({ type: 'Congé annuel', startDate: '', endDate: '', reason: '' })
+      load()
+    } catch (e: any) { setLeaveError(e.response?.data?.error || 'Erreur') }
+    finally { setLeaveSaving(false) }
+  }
+
+  const uploadDoc = async () => {
+    if (!docFile) { setDocError('Veuillez sélectionner un fichier'); return }
+    if (!docForm.name) { setDocError('Nom du document obligatoire'); return }
+    setDocSaving(true); setDocError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', docFile)
+      fd.append('employeeId', String(id))
+      fd.append('name', docForm.name)
+      fd.append('type', docForm.type)
+      fd.append('category', docForm.category)
+      if (docForm.expiryDate) fd.append('expiryDate', docForm.expiryDate)
+      await axios.post('/api/documents', fd)
+      setShowDocModal(false)
+      setDocForm({ name: '', type: 'Contrat', category: 'RH', expiryDate: '' })
+      setDocFile(null)
+      load()
+    } catch (e: any) { setDocError(e.response?.data?.error || 'Erreur') }
+    finally { setDocSaving(false) }
   }
 
   const save = async () => {
@@ -455,7 +502,7 @@ function EmployeeDetailContent() {
     <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
         <h3 className="text-body-md font-semibold">Gestion des congés</h3>
-        <button className="btn-primary">
+        <button onClick={() => { setLeaveError(''); setShowLeave(true) }} className="btn-primary">
           <span className="material-symbols-outlined text-[13px]">add</span>
           Enregistrer un congé
         </button>
@@ -584,24 +631,6 @@ function EmployeeDetailContent() {
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-outline-variant">
-          <span className="material-symbols-outlined text-[15px] text-on-surface-variant">credit_card</span>
-          <h3 className="text-body-md font-semibold">Mode de paiement</h3>
-        </div>
-        <div className="p-4">
-          <div className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant">
-            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">info</span>
-            <div>
-              <p className="text-body-md text-on-surface">Aucun fournisseur de paiement connecté</p>
-              <p className="text-caption text-secondary">
-                Connectez un fournisseur de paiement dans Paramètres → Paiements d'abord.{' '}
-                <span className="text-primary cursor-pointer hover:underline">Paramètres de paiement</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 
@@ -619,20 +648,25 @@ function EmployeeDetailContent() {
         <div className="p-4 space-y-2">
           {employee.contracts.length === 0
             ? <p className="text-body-md text-on-surface-variant text-center py-4">Aucun contrat</p>
-            : employee.contracts.map(c => (
-              <div key={c.id} className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant">
-                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">description</span>
-                <div className="flex-1">
-                  <p className="text-body-md font-medium">{c.type === 'CDI' ? 'Durée indéterminée' : c.type}</p>
-                  <p className="text-caption text-secondary">
-                    {new Date(c.startDate).toLocaleDateString('fr-FR')} — {c.endDate ? new Date(c.endDate).toLocaleDateString('fr-FR') : '—'}
-                  </p>
+            : employee.contracts.map(c => {
+              const statusCls = c.status === 'ACTIVE' ? 'bg-tertiary/10 text-tertiary' : c.status === 'CANCELLED' ? 'bg-error/10 text-error' : 'bg-surface-container text-secondary border border-outline-variant'
+              const statusLbl = c.status === 'ACTIVE' ? 'Actif' : c.status === 'CANCELLED' ? 'Annulé' : c.status === 'EXPIRED' ? 'Expiré' : 'Brouillon'
+              return (
+                <div key={c.id} className="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant">
+                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">description</span>
+                  <div className="flex-1">
+                    <p className="text-body-md font-medium">{c.type === 'CDI' ? 'Durée indéterminée' : c.type} · {c.contractNo}</p>
+                    <p className="text-caption text-secondary">
+                      {new Date(c.startDate).toLocaleDateString('fr-FR')} — {c.endDate ? new Date(c.endDate).toLocaleDateString('fr-FR') : '—'}
+                    </p>
+                  </div>
+                  <span className={`text-caption px-2 py-0.5 rounded-full ${statusCls}`}>{statusLbl}</span>
+                  <button onClick={() => router.push(`/contracts/${c.id}/view`)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container text-secondary" title="Voir">
+                    <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+                  </button>
                 </div>
-                <span className="text-caption px-2 py-0.5 rounded-full bg-surface-container text-secondary border border-outline-variant">
-                  Archivé
-                </span>
-              </div>
-            ))
+              )
+            })
           }
         </div>
       </div>
@@ -640,7 +674,7 @@ function EmployeeDetailContent() {
       <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline-variant">
           <h3 className="text-body-md font-semibold">Documents</h3>
-          <button className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}>
+          <button onClick={() => { setDocError(''); setShowDocModal(true) }} className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}>
             <span className="material-symbols-outlined text-[13px]">upload</span>
             Téléverser
           </button>
@@ -664,8 +698,9 @@ function EmployeeDetailContent() {
   // ── ÉVALUATION ───────────────────────────────────────────────────────────────
   const evaluationTab = (
     <div className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col items-center justify-center min-h-[200px]">
-      <span className="material-symbols-outlined text-[40px] text-on-surface-variant mb-3">payments</span>
-      <p className="text-body-md text-on-surface-variant">Cet employé n'a pas encore d'avance sur salaire.</p>
+      <span className="material-symbols-outlined text-[40px] text-on-surface-variant mb-3">star_rate</span>
+      <p className="text-body-md text-on-surface-variant">Aucune évaluation enregistrée pour cet employé.</p>
+      <p className="text-caption text-secondary mt-1">Les évaluations de performance seront disponibles ici.</p>
     </div>
   )
 
@@ -755,6 +790,105 @@ function EmployeeDetailContent() {
 
       {tabContent[activeTab]}
     </div>
+
+    {/* ── Modal Congé ─────────────────────────────────────────────────────── */}
+    {showLeave && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-md">
+          <div className="flex items-center justify-between p-5 border-b border-outline-variant">
+            <h2 className="text-title-md font-semibold text-on-surface">Enregistrer un congé</h2>
+            <button onClick={() => setShowLeave(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container">
+              <span className="material-symbols-outlined text-[18px] text-secondary">close</span>
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            {leaveError && <div className="bg-error-container text-on-error-container p-3 rounded-lg text-body-md">{leaveError}</div>}
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Type de congé</label>
+              <select value={leaveForm.type} onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <option>Congé annuel</option>
+                <option>Congé maladie</option>
+                <option>Congé maternité</option>
+                <option>Congé paternité</option>
+                <option>Congé sans solde</option>
+                <option>Autre</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-1.5">Date de début *</label>
+                <input type="date" value={leaveForm.startDate} onChange={e => setLeaveForm(f => ({ ...f, startDate: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-1.5">Date de fin *</label>
+                <input type="date" value={leaveForm.endDate} onChange={e => setLeaveForm(f => ({ ...f, endDate: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Motif</label>
+              <textarea value={leaveForm.reason} onChange={e => setLeaveForm(f => ({ ...f, reason: e.target.value }))} rows={2} placeholder="Motif du congé..." className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 px-5 py-4 border-t border-outline-variant">
+            <button onClick={() => setShowLeave(false)} className="btn-secondary">Annuler</button>
+            <button onClick={confirmLeave} disabled={leaveSaving} className="btn-primary">
+              {leaveSaving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Modal Document ───────────────────────────────────────────────────── */}
+    {showDocModal && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-md">
+          <div className="flex items-center justify-between p-5 border-b border-outline-variant">
+            <h2 className="text-title-md font-semibold text-on-surface">Téléverser un document</h2>
+            <button onClick={() => setShowDocModal(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container">
+              <span className="material-symbols-outlined text-[18px] text-secondary">close</span>
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            {docError && <div className="bg-error-container text-on-error-container p-3 rounded-lg text-body-md">{docError}</div>}
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Fichier *</label>
+              <input ref={docFileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={e => setDocFile(e.target.files?.[0] ?? null)} className="w-full text-body-md file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary-container file:text-on-primary-container file:text-label-md cursor-pointer" />
+            </div>
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Nom du document *</label>
+              <input value={docForm.name} onChange={e => setDocForm(f => ({ ...f, name: e.target.value }))} placeholder="ex. Contrat CDI signé" className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-1.5">Type</label>
+                <select value={docForm.type} onChange={e => setDocForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option>Contrat</option><option>Pièce d'identité</option><option>Diplôme</option><option>Attestation</option><option>Autre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-label-md text-on-surface-variant mb-1.5">Catégorie</label>
+                <select value={docForm.category} onChange={e => setDocForm(f => ({ ...f, category: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option>RH</option><option>Administratif</option><option>Formation</option><option>Médical</option><option>Autre</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Date d'expiration</label>
+              <input type="date" value={docForm.expiryDate} onChange={e => setDocForm(f => ({ ...f, expiryDate: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 px-5 py-4 border-t border-outline-variant">
+            <button onClick={() => setShowDocModal(false)} className="btn-secondary">Annuler</button>
+            <button onClick={uploadDoc} disabled={docSaving} className="btn-primary flex items-center gap-2">
+              {docSaving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Téléverser
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* ── Modal Départ ────────────────────────────────────────────────────── */}
     {showDepart && (

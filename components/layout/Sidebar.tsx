@@ -14,7 +14,6 @@ const navGroups = [
       { href: '/contracts', icon: 'description', label: 'Contrats' },
       { href: '/documents', icon: 'folder_shared', label: 'Documents' },
       { href: '/payroll', icon: 'payments', label: 'Paie' },
-      { href: '/payroll/compliance', icon: 'verified_user', label: 'Conformité Paie' },
     ],
   },
   {
