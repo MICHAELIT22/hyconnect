@@ -37,8 +37,6 @@ const NAV_ITEMS = [
   { id: 'users', label: 'Utilisateurs', icon: 'group' },
   { id: 'salary', label: 'Paie', icon: 'payments' },
   { id: 'leaves', label: 'Politique de congés', icon: 'event_busy' },
-  { id: 'payments', label: 'Paiements', icon: 'credit_card' },
-  { id: 'billing', label: 'Facturation', icon: 'receipt_long' },
   { id: 'audit', label: "Journal d'audit", icon: 'history' },
 ]
 
@@ -114,11 +112,6 @@ function SettingsInner() {
   // Leave policies
   const [leaves, setLeaves] = useState<Record<string, string>>({})
   const [leavesSaved, setLeavesSaved] = useState(false)
-
-  // Danger
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
-  const [resetInput, setResetInput] = useState('')
-  const [resetting, setResetting] = useState(false)
 
   // Toast notification
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
@@ -273,20 +266,6 @@ function SettingsInner() {
     }
   }
 
-  async function doReset() {
-    setResetting(true)
-    try {
-      await axios.post('/api/settings', { action: 'reset_employee_data', data: {} })
-      setShowResetConfirm(false)
-      setResetInput('')
-      alert('Données employés réinitialisées.')
-    } catch (err: any) {
-      alert('Erreur: ' + (err.response?.data?.error || err.message))
-    } finally {
-      setResetting(false)
-    }
-  }
-
   const PhonePrefix = () => (
     <div className="flex items-center gap-1 px-2.5 border border-r-0 border-outline-variant rounded-l-lg bg-surface-container text-body-md whitespace-nowrap select-none">
       <span className="text-[16px]">{selectedCountry.flag}</span>
@@ -362,38 +341,34 @@ function SettingsInner() {
               </div>
             </SectionCard>
 
-            <SectionCard title="Pays d'exploitation" subtitle="Sélectionnez le pays où votre entreprise opère. Cela affecte la devise, les impôts et les cotisations sociales.">
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-body-md font-medium text-on-surface block mb-1">Pays</label>
-                    <div className="relative">
-                      <select
-                        value={company.company_country || 'Togo'}
-                        onChange={e => {
-                          const c = COUNTRIES.find(c => c.name === e.target.value)
-                          setCompany(prev => ({ ...prev, company_country: e.target.value, company_currency: c?.currency || '' }))
-                        }}
-                        className={`${ic} appearance-none pr-8`}
-                      >
-                        {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.flag} {c.name}</option>)}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[14px] text-on-surface-variant pointer-events-none">expand_more</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-body-md font-medium text-on-surface block mb-1">Devise</label>
-                    <input
-                      value={company.company_currency || selectedCountry.currency}
-                      disabled
-                      className={`${ic} bg-surface-container text-secondary cursor-not-allowed`}
-                    />
+            <SectionCard title="Pays et devise" subtitle="Sélectionnez le pays où votre entreprise opère. La devise est automatiquement déduite.">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-body-md font-medium text-on-surface block mb-1">Pays</label>
+                  <div className="relative">
+                    <select
+                      value={company.company_country || 'Togo'}
+                      onChange={e => {
+                        const c = COUNTRIES.find(c => c.name === e.target.value)
+                        setCompany(prev => ({ ...prev, company_country: e.target.value, company_currency: c?.currency || '' }))
+                      }}
+                      className={`${ic} appearance-none pr-8`}
+                    >
+                      {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.flag} {c.name}</option>)}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[14px] text-on-surface-variant pointer-events-none">expand_more</span>
                   </div>
                 </div>
-                <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
-                  <p className="text-caption text-primary">
-                    <span className="font-semibold">Note :</span> Le changement de pays mettra à jour la devise, les calculs d'impôts et les cotisations sociales pour tous les futurs cycles de paie. Les cycles existants ne seront pas affectés.
-                  </p>
+                <div>
+                  <label className="text-body-md font-medium text-on-surface block mb-1">
+                    Devise
+                    <span className="ml-2 text-caption text-secondary font-normal">— déterminée par le pays</span>
+                  </label>
+                  <input
+                    value={company.company_currency || selectedCountry.currency}
+                    disabled
+                    className={`${ic} bg-surface-container text-secondary cursor-not-allowed`}
+                  />
                 </div>
               </div>
             </SectionCard>
@@ -519,45 +494,6 @@ function SettingsInner() {
               </button>
             </div>
 
-            {/* Zone de danger */}
-            <div className="bg-surface rounded-xl border-2 border-error/30">
-              <div className="px-4 py-3 border-b border-error/20">
-                <h3 className="text-title-sm font-semibold text-error">Zone de danger</h3>
-                <p className="text-caption text-error/70">Ces actions sont irréversibles. Procédez avec prudence.</p>
-              </div>
-              <div className="p-4 space-y-3">
-                {[
-                  {
-                    title: 'Réinitialiser toutes les données employés',
-                    desc: 'Supprime définitivement tous les employés, contrats, paies, congés et feuilles de temps.',
-                    label: 'Réinitialiser',
-                    icon: 'delete_forever',
-                    onClick: () => setShowResetConfirm(true),
-                  },
-                  {
-                    title: "Supprimer cette entreprise",
-                    desc: "Supprime définitivement l'entreprise, tous les employés, la paie, les documents et les données de facturation.",
-                    label: "Supprimer l'entreprise",
-                    icon: 'corporate_fare',
-                    onClick: () => alert('Contactez le support pour supprimer votre entreprise.'),
-                  },
-                ].map(item => (
-                  <div key={item.title} className="flex items-center justify-between p-3 bg-error-container/20 rounded-lg border border-error/20">
-                    <div>
-                      <p className="text-body-md font-semibold text-on-surface">{item.title}</p>
-                      <p className="text-caption text-secondary">{item.desc}</p>
-                    </div>
-                    <button
-                      onClick={item.onClick}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-error text-on-error rounded-lg text-label-md font-semibold hover:bg-error/90 transition-colors ml-4 flex-shrink-0"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">{item.icon}</span>
-                      {item.label}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
           </>
         )}
 
@@ -829,18 +765,6 @@ function SettingsInner() {
         )}
 
         {/* ════ STUBS ════ */}
-        {section === 'payments' && (
-          <>
-            <div><h2 className="text-headline-sm font-bold text-on-surface">Paiements</h2></div>
-            <StubSection icon="credit_card" title="Modes de paiement" desc="Configurez les méthodes de virement et de paiement des salaires." />
-          </>
-        )}
-        {section === 'billing' && (
-          <>
-            <div><h2 className="text-headline-sm font-bold text-on-surface">Facturation</h2></div>
-            <StubSection icon="receipt_long" title="Facturation & abonnement" desc="Gérez votre abonnement, vos factures et vos informations de paiement." />
-          </>
-        )}
         {section === 'audit' && (
           <>
             <div><h2 className="text-headline-sm font-bold text-on-surface">Journal d'audit</h2></div>
@@ -895,37 +819,6 @@ function SettingsInner() {
         </div>
       )}
 
-      {/* ── Modal Reset Confirmation ── */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-xl shadow-level-3 border border-outline-variant w-[480px] overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant">
-              <span className="material-symbols-outlined text-error text-[20px]">warning</span>
-              <h3 className="text-title-sm font-semibold text-error">Confirmer la réinitialisation</h3>
-            </div>
-            <div className="p-4 space-y-3">
-              <p className="text-body-md text-on-surface">Cette action est <strong>irréversible</strong>. Toutes les données employés seront supprimées définitivement.</p>
-              <div>
-                <label className="text-body-md font-medium text-on-surface block mb-1">
-                  Tapez <span className="font-mono bg-surface-container px-1.5 py-0.5 rounded text-error">RÉINITIALISER</span> pour confirmer
-                </label>
-                <input value={resetInput} onChange={e => setResetInput(e.target.value)} className={ic} placeholder="RÉINITIALISER" />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 px-4 py-3 border-t border-outline-variant">
-              <button onClick={() => { setShowResetConfirm(false); setResetInput('') }} className="px-4 py-2 border border-outline text-secondary rounded-lg text-label-md hover:bg-surface-container-low">Annuler</button>
-              <button
-                disabled={resetInput !== 'RÉINITIALISER' || resetting}
-                onClick={doReset}
-                className="flex items-center gap-1.5 px-4 py-2 bg-error text-on-error rounded-lg text-label-md font-semibold disabled:opacity-50 hover:bg-error/90 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[15px]">delete_forever</span>
-                {resetting ? 'Réinitialisation...' : 'Réinitialiser définitivement'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
