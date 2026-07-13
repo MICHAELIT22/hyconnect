@@ -22,16 +22,16 @@ interface Employee {
   contracts: { type: string }[]
 }
 
-function KpiCard({ label, value, icon, colorClass = 'text-on-surface-variant', bgClass = '' }: {
+function KpiCard({ label, value, icon, colorClass = 'text-on-surface-variant', bgClass = 'bg-surface-variant' }: {
   label: string; value: number; icon: string; colorClass?: string; bgClass?: string
 }) {
   return (
-    <div className={`bg-surface rounded-xl p-3 shadow-level-1 border border-outline-variant ${bgClass}`}>
-      <div className="flex justify-between items-start">
-        <span className="text-label-md text-on-surface-variant">{label}</span>
-        <span className={`material-symbols-outlined text-[15px] ${colorClass}`}>{icon}</span>
+    <div className="card flex flex-col items-center justify-center text-center gap-1 py-2">
+      <div className={`w-8 h-8 ${bgClass} rounded-xl flex items-center justify-center`}>
+        <span className={`material-symbols-outlined ${colorClass} text-[15px]`}>{icon}</span>
       </div>
-      <div className={`text-display-lg mt-0.5 ${colorClass}`}>{value}</div>
+      <p className={`text-title-sm font-semibold ${colorClass}`}>{value}</p>
+      <p className="text-caption text-on-surface-variant leading-tight">{label}</p>
     </div>
   )
 }
@@ -163,15 +163,15 @@ export default function EmployeesPage() {
     <div>
       {/* KPI */}
       <div className="grid grid-cols-4 gap-3 mb-4">
-        <KpiCard label="Effectif total" value={employees.length} icon="groups" colorClass="text-primary" bgClass="bg-primary-container/20" />
-        <KpiCard label="Actifs" value={activeCount} icon="how_to_reg" colorClass="text-tertiary" />
-        <KpiCard label="En congé" value={leaveCount} icon="event_busy" colorClass="text-warning" />
-        <KpiCard label="Sortis" value={departedCount} icon="person_remove" colorClass="text-error" />
+        <KpiCard label="Effectif total" value={employees.length} icon="groups" colorClass="text-primary" bgClass="bg-primary/10" />
+        <KpiCard label="Actifs" value={activeCount} icon="how_to_reg" colorClass="text-tertiary" bgClass="bg-tertiary-container" />
+        <KpiCard label="En congé" value={leaveCount} icon="event_busy" colorClass="text-warning" bgClass="bg-warning-container" />
+        <KpiCard label="Sortis" value={departedCount} icon="person_remove" colorClass="text-error" bgClass="bg-error-container" />
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-headline-md text-on-background">Employés</h2>
+        <h2 className="text-headline-md font-semibold text-on-surface">Employés</h2>
         <div className="flex items-center gap-2">
           <button className="btn-secondary">
             <span className="material-symbols-outlined text-[15px]">upload</span>

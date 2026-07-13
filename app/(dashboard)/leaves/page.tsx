@@ -123,14 +123,17 @@ export default function LeavesPage() {
 
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total', value: leaves.length, color: 'text-primary' },
-          { label: 'En attente', value: pending, color: 'text-warning' },
-          { label: 'Approuvés', value: approved, color: 'text-success' },
-          { label: 'En cours', value: inProgress, color: 'text-tertiary' },
+          { label: 'Total', value: leaves.length, color: 'text-primary', bg: 'bg-primary/10', icon: 'event_busy' },
+          { label: 'En attente', value: pending, color: 'text-warning', bg: 'bg-warning-container', icon: 'schedule' },
+          { label: 'Approuvés', value: approved, color: 'text-success', bg: 'bg-success-container', icon: 'check_circle' },
+          { label: 'En cours', value: inProgress, color: 'text-tertiary', bg: 'bg-tertiary-container', icon: 'directions_run' },
         ].map(k => (
-          <div key={k.label} className="card">
-            <p className="text-label-md text-on-surface-variant">{k.label}</p>
-            <p className={`text-display-lg font-bold mt-0.5 ${k.color}`}>{k.value}</p>
+          <div key={k.label} className="card flex flex-col items-center justify-center text-center gap-1 py-2">
+            <div className={`w-8 h-8 ${k.bg} rounded-xl flex items-center justify-center`}>
+              <span className={`material-symbols-outlined ${k.color} text-[15px]`}>{k.icon}</span>
+            </div>
+            <p className={`text-title-sm font-semibold ${k.color}`}>{k.value}</p>
+            <p className="text-caption text-on-surface-variant leading-tight">{k.label}</p>
           </div>
         ))}
       </div>
