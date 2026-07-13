@@ -23,7 +23,16 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  // Stale refresh token — clear it so the browser stops looping
+  if (authError?.code === 'refresh_token_not_found' || authError?.code === 'bad_refresh_token') {
+    const response = NextResponse.redirect(new URL('/login', request.url))
+    request.cookies.getAll().forEach(c => {
+      if (c.name.startsWith('sb-')) response.cookies.delete(c.name)
+    })
+    return response
+  }
 
   const { pathname } = request.nextUrl
 
