@@ -54,6 +54,7 @@ interface Employee {
   trainings: Array<{ id: number; title: string; organization: string; date: string; certificate: boolean }>
   medicals: Array<{ id: number; date: string; doctor: string | null; result: string | null; nextVisit: string | null }>
   documents: Array<{ id: number; name: string; type: string; category: string; expiryDate: string | null; status: string }>
+  notes: Array<{ id: string; text: string; createdAt: string }> | null
 }
 
 const TABS = [
@@ -136,6 +137,16 @@ function EmployeeDetailContent() {
   const [docError, setDocError] = useState('')
   const docFileRef = useRef<HTMLInputElement>(null)
 
+  // Notes
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteError, setNoteError] = useState('')
+
+  // Payroll entries for this employee
+  const [payrollEntries, setPayrollEntries] = useState<any[]>([])
+  const [payrollLoading, setPayrollLoading] = useState(false)
+
   // Départ modal
   const [showDepart, setShowDepart] = useState(false)
   const [depart, setDepart] = useState({
@@ -156,6 +167,16 @@ function EmployeeDetailContent() {
   }
 
   useEffect(() => { load() }, [id])
+
+  // Load payroll entries when paie tab is selected
+  useEffect(() => {
+    if (activeTab !== 'paie') return
+    setPayrollLoading(true)
+    axios.get(`/api/payroll/employee/${id}`)
+      .then(r => setPayrollEntries(r.data))
+      .catch(() => setPayrollEntries([]))
+      .finally(() => setPayrollLoading(false))
+  }, [activeTab, id])
 
   // Auto-activate edit mode if ?edit=true
   useEffect(() => {
@@ -194,6 +215,27 @@ function EmployeeDetailContent() {
     } finally {
       setDepartSaving(false)
     }
+  }
+
+  const saveNote = async () => {
+    if (!noteText.trim()) { setNoteError('La note ne peut pas être vide'); return }
+    setNoteSaving(true); setNoteError('')
+    try {
+      const existing = Array.isArray(employee?.notes) ? employee!.notes : []
+      const newNote = { id: `n_${Date.now()}`, text: noteText.trim(), createdAt: new Date().toISOString() }
+      await axios.put(`/api/employees/${id}`, { notes: [...existing, newNote] })
+      setNoteText('')
+      setShowNoteModal(false)
+      load()
+    } catch (e: any) { setNoteError(e.response?.data?.error || 'Erreur') }
+    finally { setNoteSaving(false) }
+  }
+
+  const deleteNote = async (noteId: string) => {
+    const existing = Array.isArray(employee?.notes) ? employee!.notes : []
+    const updated = existing.filter((n: any) => n.id !== noteId)
+    await axios.put(`/api/employees/${id}`, { notes: updated })
+    load()
   }
 
   const confirmLeave = async () => {
@@ -322,12 +364,28 @@ function EmployeeDetailContent() {
               <span className="material-symbols-outlined text-[14px] text-on-surface-variant">description</span>
               <h3 className="text-body-md font-semibold">Notes</h3>
             </div>
-            <button className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}>
+            <button onClick={() => { setNoteError(''); setNoteText(''); setShowNoteModal(true) }} className="btn-secondary" style={{ padding: '2px 8px', fontSize: '11px' }}>
               <span className="material-symbols-outlined text-[13px]">add</span>
               Ajouter une note
             </button>
           </div>
-          <p className="text-body-md text-on-surface-variant text-center py-4">Aucune note pour le moment</p>
+          {!employee.notes || (employee.notes as any[]).length === 0 ? (
+            <p className="text-body-md text-on-surface-variant text-center py-4">Aucune note pour le moment</p>
+          ) : (
+            <div className="space-y-2">
+              {(employee.notes as any[]).map((n: any) => (
+                <div key={n.id} className="flex items-start gap-2 p-2.5 bg-surface-container-lowest rounded-lg border border-outline-variant group">
+                  <p className="text-body-md text-on-surface flex-1 whitespace-pre-wrap">{n.text}</p>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <button onClick={() => deleteNote(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center hover:bg-error-container text-secondary hover:text-error">
+                      <span className="material-symbols-outlined text-[13px]">delete</span>
+                    </button>
+                    <p className="text-caption text-secondary">{new Date(n.createdAt).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -620,17 +678,148 @@ function EmployeeDetailContent() {
   )
 
   // ── PAIE ────────────────────────────────────────────────────────────────────
+  const empBase = employee.baseSalary || 0
+  const empTransport = employee.transportAllowance || 0
+  const empHousing = employee.housingAllowance || 0
+  const empPositionAl = employee.positionAllowance || 0
+  const empGross = empBase + empTransport + empHousing + empPositionAl
+  const empCnss = Math.round(empGross * 0.032 * 100) / 100
+  const empTaxable = empGross - empCnss
+  let empIrpp = 0
+  if (empTaxable > 600000) empIrpp = empTaxable * 0.25
+  else if (empTaxable > 300000) empIrpp = empTaxable * 0.20
+  else if (empTaxable > 150000) empIrpp = empTaxable * 0.15
+  else if (empTaxable > 75000) empIrpp = empTaxable * 0.10
+  empIrpp = Math.round(empIrpp * 100) / 100
+  const empNet = Math.round((empGross - empCnss - empIrpp) * 100) / 100
+  const fmtXOF = (v: number) => v.toLocaleString('fr-FR') + ' FCFA'
+  const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
+  const statusCycleCls: Record<string, string> = {
+    DRAFT: 'bg-surface-container text-secondary border border-outline-variant',
+    PROCESSED: 'bg-primary/10 text-primary',
+    PAID: 'bg-tertiary/10 text-tertiary',
+  }
+  const statusCycleLbl: Record<string, string> = { DRAFT: 'Brouillon', PROCESSED: 'Traité', PAID: 'Payé' }
+
   const paieTab = (
     <div className="space-y-4">
+      {/* Fiche de rémunération */}
       <div className="bg-surface rounded-xl border border-outline-variant p-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div><Lbl>CNSS Number</Lbl><input value={String(val('socialSecurityNumber'))} onChange={set('socialSecurityNumber')} disabled={!editMode} placeholder="Social security number" className={ic(!editMode)} /></div>
-          <div><Lbl>Tax ID (NIF)</Lbl><input value={String(val('taxId'))} onChange={set('taxId')} disabled={!editMode} placeholder="e.g. 1000XXXXXX" className={ic(!editMode)} /></div>
-          <div><Lbl>Nom de la banque</Lbl><input value={String(val('bankName'))} onChange={set('bankName')} disabled={!editMode} className={ic(!editMode)} /></div>
-          <div><Lbl>Compte bancaire</Lbl><input value={String(val('accountNumber'))} onChange={set('accountNumber')} disabled={!editMode} className={ic(!editMode)} /></div>
+        <h3 className="text-label-md font-semibold text-primary uppercase tracking-wide mb-4">Fiche de rémunération</h3>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div><Lbl>CNSS</Lbl><input value={String(val('socialSecurityNumber'))} onChange={set('socialSecurityNumber')} disabled={!editMode} placeholder="Numéro CNSS" className={ic(!editMode)} /></div>
+          <div><Lbl>NIF (Tax ID)</Lbl><input value={String(val('taxId'))} onChange={set('taxId')} disabled={!editMode} placeholder="ex. 1000XXXXXX" className={ic(!editMode)} /></div>
+          <div><Lbl>Banque</Lbl><input value={String(val('bankName'))} onChange={set('bankName')} disabled={!editMode} className={ic(!editMode)} /></div>
+          <div><Lbl>Numéro de compte</Lbl><input value={String(val('accountNumber'))} onChange={set('accountNumber')} disabled={!editMode} className={ic(!editMode)} /></div>
+        </div>
+
+        <div className="border-t border-outline-variant pt-4 mt-2">
+          <h4 className="text-label-sm text-secondary uppercase tracking-wide mb-3">Composantes salariales</h4>
+          {editMode ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div><Lbl>Salaire de base (FCFA)</Lbl><input type="number" value={form.baseSalary ?? ''} onChange={set('baseSalary')} className={ic(false)} /></div>
+              <div><Lbl>Indemnité transport (FCFA)</Lbl><input type="number" value={form.transportAllowance ?? ''} onChange={set('transportAllowance')} className={ic(false)} /></div>
+              <div><Lbl>Indemnité logement (FCFA)</Lbl><input type="number" value={form.housingAllowance ?? ''} onChange={set('housingAllowance')} className={ic(false)} /></div>
+              <div><Lbl>Indemnité de poste (FCFA)</Lbl><input type="number" value={form.positionAllowance ?? ''} onChange={set('positionAllowance')} className={ic(false)} /></div>
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {[
+                { label: 'Salaire de base', value: empBase },
+                { label: 'Indemnité transport', value: empTransport },
+                { label: 'Indemnité logement', value: empHousing },
+                { label: 'Indemnité de poste', value: empPositionAl },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between py-2 border-b border-outline-variant last:border-0">
+                  <span className="text-body-md text-on-surface-variant">{row.label}</span>
+                  <span className="text-body-md font-medium text-on-surface">{fmtXOF(row.value)}</span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between py-2 border-b border-outline-variant">
+                <span className="text-body-md font-semibold text-on-surface">Salaire brut</span>
+                <span className="text-body-md font-bold text-on-surface">{fmtXOF(empGross)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-outline-variant">
+                <span className="text-body-md text-warning">CNSS (3.2%)</span>
+                <span className="text-body-md text-warning">− {fmtXOF(empCnss)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-outline-variant">
+                <span className="text-body-md text-error">IRPP</span>
+                <span className="text-body-md text-error">− {fmtXOF(empIrpp)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 bg-primary/5 rounded-lg px-3 mt-1">
+                <span className="text-body-md font-bold text-primary">Salaire net</span>
+                <span className="text-title-sm font-bold text-primary">{fmtXOF(empNet)}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Historique des bulletins */}
+      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline-variant">
+          <h3 className="text-body-md font-semibold">Historique des bulletins de paie</h3>
+          <button onClick={() => router.push('/payroll')} className="text-label-md text-primary hover:underline flex items-center gap-1">
+            Gérer les cycles
+            <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+          </button>
+        </div>
+        {payrollLoading ? (
+          <div className="p-6 flex justify-center">
+            <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : payrollEntries.length === 0 ? (
+          <div className="p-8 text-center">
+            <span className="material-symbols-outlined text-[32px] text-on-surface-variant">receipt_long</span>
+            <p className="text-body-md text-on-surface-variant mt-2">Aucun bulletin de paie pour cet employé.</p>
+            <p className="text-caption text-secondary mt-1">Les bulletins apparaissent ici une fois le cycle de paie créé.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-outline-variant bg-surface-container-lowest">
+                  <th className="text-left px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">Période</th>
+                  <th className="text-left px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">Statut</th>
+                  <th className="text-right px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">Brut</th>
+                  <th className="text-right px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">CNSS</th>
+                  <th className="text-right px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">IRPP</th>
+                  <th className="text-right px-4 py-2 text-label-md font-semibold text-on-surface-variant uppercase">Net</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant">
+                {payrollEntries.map((e: any) => (
+                  <tr key={e.id} className="hover:bg-surface-container-lowest transition-colors">
+                    <td className="px-4 py-2.5 text-body-md font-medium capitalize">
+                      {e.cycle ? `${MONTHS_FR[e.cycle.month - 1]} ${e.cycle.year}` : '—'}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {e.cycle && (
+                        <span className={`text-caption px-2 py-0.5 rounded-full ${statusCycleCls[e.cycle.status] || ''}`}>
+                          {statusCycleLbl[e.cycle.status] || e.cycle.status}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right text-body-md">{fmtXOF(e.gross || 0)}</td>
+                    <td className="px-4 py-2.5 text-right text-body-md text-warning">{fmtXOF(e.cnss || 0)}</td>
+                    <td className="px-4 py-2.5 text-right text-body-md text-error">{fmtXOF(e.tax || 0)}</td>
+                    <td className="px-4 py-2.5 text-right text-body-md font-bold text-tertiary">{fmtXOF(e.net || 0)}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      {e.cycle && (
+                        <button onClick={() => router.push(`/payroll/${e.cycle.id}`)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container text-secondary" title="Voir le cycle">
+                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 
@@ -790,6 +979,38 @@ function EmployeeDetailContent() {
 
       {tabContent[activeTab]}
     </div>
+
+    {/* ── Modal Note ──────────────────────────────────────────────────────── */}
+    {showNoteModal && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-sm">
+          <div className="flex items-center justify-between p-5 border-b border-outline-variant">
+            <h2 className="text-title-md font-semibold text-on-surface">Ajouter une note</h2>
+            <button onClick={() => setShowNoteModal(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container">
+              <span className="material-symbols-outlined text-[18px] text-secondary">close</span>
+            </button>
+          </div>
+          <div className="p-5">
+            {noteError && <div className="bg-error-container text-on-error-container p-3 rounded-lg text-body-md mb-3">{noteError}</div>}
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              autoFocus
+              rows={4}
+              placeholder="Saisissez votre note..."
+              className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            />
+          </div>
+          <div className="flex justify-end gap-3 px-5 py-4 border-t border-outline-variant">
+            <button onClick={() => setShowNoteModal(false)} className="btn-secondary">Annuler</button>
+            <button onClick={saveNote} disabled={noteSaving} className="btn-primary flex items-center gap-2">
+              {noteSaving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* ── Modal Congé ─────────────────────────────────────────────────────── */}
     {showLeave && (
