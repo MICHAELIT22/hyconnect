@@ -506,9 +506,9 @@ function SettingsInner() {
             </div>
             <SectionCard title="Liste des départements" subtitle="Ces départements sont disponibles lors de la création ou modification d'un employé.">
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <input
-                    className={`${ic} flex-1`}
+                    className={ic}
                     value={newDept}
                     onChange={e => setNewDept(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && newDept.trim()) { setDepts(d => [...d, newDept.trim()]); setNewDept('') } }}
@@ -516,7 +516,7 @@ function SettingsInner() {
                   />
                   <button
                     onClick={() => { if (newDept.trim()) { setDepts(d => [...d, newDept.trim()]); setNewDept('') } }}
-                    className="px-3 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-1"
+                    className="px-3 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-1 whitespace-nowrap"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span>
                     Ajouter
@@ -560,22 +560,23 @@ function SettingsInner() {
             </div>
             <SectionCard title="Liste des succursales" subtitle="Vos agences ou sites d'exploitation.">
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="grid grid-cols-[1fr_11rem_auto] gap-2 items-center">
                   <input
-                    className={`${ic} flex-1`}
+                    className={ic}
                     value={newBranch.name}
                     onChange={e => setNewBranch(b => ({ ...b, name: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter' && newBranch.name.trim()) { setBranches(b => [...b, { ...newBranch }]); setNewBranch({ name: '', city: '' }) } }}
                     placeholder="Nom de la succursale"
                   />
                   <input
-                    className={`${ic} w-44`}
+                    className={ic}
                     value={newBranch.city}
                     onChange={e => setNewBranch(b => ({ ...b, city: e.target.value }))}
                     placeholder="Ville"
                   />
                   <button
                     onClick={() => { if (newBranch.name.trim()) { setBranches(b => [...b, { ...newBranch }]); setNewBranch({ name: '', city: '' }) } }}
-                    className="px-3 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-1"
+                    className="px-3 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-1 whitespace-nowrap"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span>
                     Ajouter
