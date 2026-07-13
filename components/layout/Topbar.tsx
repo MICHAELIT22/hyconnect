@@ -11,6 +11,7 @@ export default function Topbar({ user }: { user: User }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [photoPath, setPhotoPath] = useState<string | null>(null)
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null)
   const [logoError, setLogoError] = useState(false)
 
   const displayName = user.user_metadata?.displayName || user.user_metadata?.username || user.email?.replace('@hyconnect.local', '') || 'Utilisateur'
@@ -20,6 +21,9 @@ export default function Topbar({ user }: { user: User }) {
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
       if (d.photoPath) setPhotoPath(d.photoPath)
+    }).catch(() => {})
+    fetch('/api/settings?section=company').then(r => r.json()).then(d => {
+      if (d?.company_logo) setCompanyLogo(d.company_logo)
     }).catch(() => {})
   }, [])
 
@@ -93,9 +97,9 @@ export default function Topbar({ user }: { user: User }) {
             <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
               {photoPath
                 ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
-                : logoError
-                  ? <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
-                  : <img src="/logo.png" alt="HyConnect" className="w-full h-full object-cover" onError={() => setLogoError(true)} />
+                : (companyLogo || !logoError)
+                  ? <img src={companyLogo || '/logo.png'} alt="logo" className="w-full h-full object-cover" onError={() => setLogoError(true)} />
+                  : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
               }
             </div>
             <div className="hidden sm:block text-left">
@@ -116,7 +120,9 @@ export default function Topbar({ user }: { user: User }) {
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
                     {photoPath
                       ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
-                      : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-md">{displayName.charAt(0).toUpperCase()}</div>
+                      : companyLogo
+                        ? <img src={companyLogo} alt="logo" className="w-full h-full object-cover" />
+                        : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-md">{displayName.charAt(0).toUpperCase()}</div>
                     }
                   </div>
                   <div>
