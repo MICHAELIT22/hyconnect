@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import SWRProvider from '@/components/SWRProvider'
+import PWAInstallModal from '@/components/PWAInstallModal'
 
 export const metadata: Metadata = {
   title: 'HyConnect - RH Manager',
@@ -19,9 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <head>
         <meta name="theme-color" content="#1A56DB" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body><SWRProvider>{children}</SWRProvider></body>
+      <body><SWRProvider>{children}<PWAInstallModal /></SWRProvider></body>
     </html>
   )
 }
