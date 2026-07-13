@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
 export default function Topbar({ user }: { user: User }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [photoPath, setPhotoPath] = useState<string | null>(null)
@@ -18,14 +19,22 @@ export default function Topbar({ user }: { user: User }) {
   const userRole = user.user_metadata?.role === 'ADMIN' ? 'Administrateur RH' : (user.user_metadata?.role || 'Utilisateur')
   const department = user.user_metadata?.department || ''
 
+  const fetchLogo = useCallback(() => {
+    fetch('/api/settings?section=company').then(r => r.json()).then(d => {
+      if (d?.company_logo) { setCompanyLogo(d.company_logo); setLogoError(false) }
+      else setCompanyLogo(null)
+    }).catch(() => {})
+  }, [])
+
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
       if (d.photoPath) setPhotoPath(d.photoPath)
     }).catch(() => {})
-    fetch('/api/settings?section=company').then(r => r.json()).then(d => {
-      if (d?.company_logo) setCompanyLogo(d.company_logo)
-    }).catch(() => {})
+    fetchLogo()
   }, [])
+
+  // Refetch logo à chaque changement de page (cas: sauvegarde dans Paramètres puis navigation)
+  useEffect(() => { fetchLogo() }, [pathname, fetchLogo])
 
   const today = new Date()
   const dateStr = today.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
