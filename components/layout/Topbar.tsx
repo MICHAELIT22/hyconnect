@@ -21,9 +21,12 @@ export default function Topbar({ user }: { user: User }) {
 
   const fetchLogo = useCallback(() => {
     fetch('/api/settings?section=company').then(r => r.json()).then(d => {
-      if (d?.company_logo) { setCompanyLogo(d.company_logo); setLogoError(false) }
-      else setCompanyLogo(null)
-    }).catch(() => {})
+      console.log('[Topbar] settings response:', d)
+      const url = d?.company_logo || null
+      console.log('[Topbar] company_logo url:', url)
+      setCompanyLogo(url)
+      setLogoError(false)
+    }).catch(err => console.error('[Topbar] fetchLogo error:', err))
   }, [])
 
   useEffect(() => {
@@ -110,8 +113,8 @@ export default function Topbar({ user }: { user: User }) {
             <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex-shrink-0 bg-white">
               {photoPath
                 ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
-                : (companyLogo || !logoError)
-                  ? <img src={companyLogo || '/logo.png'} alt="logo" className="w-full h-full object-contain p-0.5" onError={() => setLogoError(true)} />
+                : companyLogo && !logoError
+                  ? <img src={companyLogo} alt="logo" className="w-full h-full object-contain p-0.5" onError={() => setLogoError(true)} />
                   : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
               }
             </div>
