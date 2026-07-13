@@ -182,11 +182,8 @@ export async function POST(req: NextRequest) {
 
     if (fetchErr || !user) return NextResponse.json({ error: fetchErr?.message || 'Utilisateur introuvable' }, { status: 500 })
 
-    // Bloquer la suppression du dernier admin
-    if (user.role === 'ADMIN') {
-      const { count } = await sb.from('User').select('id', { count: 'exact', head: true }).eq('role', 'ADMIN')
-      if ((count ?? 0) <= 1) return NextResponse.json({ error: 'Impossible de supprimer le dernier administrateur' }, { status: 400 })
-    }
+    // Bloquer la suppression du compte admin principal
+    if (user.username === 'admin') return NextResponse.json({ error: 'Le compte administrateur principal ne peut pas être supprimé' }, { status: 400 })
 
     if (user) {
       const email = `${user.username}@hyconnect.local`

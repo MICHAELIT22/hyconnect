@@ -677,15 +677,16 @@ function SettingsInner() {
                         <td className="px-4 py-3 text-body-md text-secondary">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</td>
                         <td className="px-4 py-3 text-right">
                           {(() => {
+                            const isRootAdmin = user.username === 'admin'
                             const isSelf = user.id === currentUserId
-                            const isLastAdmin = user.role === 'ADMIN' && users.filter(u => u.role === 'ADMIN').length <= 1
-                            const blocked = isSelf || isLastAdmin
+                            const blocked = isRootAdmin || isSelf
+                            const title = isRootAdmin ? 'Compte administrateur principal — non supprimable' : isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : 'Supprimer'
                             return (
                               <button
                                 onClick={() => !blocked && deleteUser(user.id)}
                                 disabled={blocked}
-                                title={isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : isLastAdmin ? 'Impossible de supprimer le dernier administrateur' : 'Supprimer'}
-                                className={`p-1.5 rounded-lg transition-colors ${blocked ? 'opacity-30 cursor-not-allowed text-secondary' : 'hover:bg-error-container text-secondary hover:text-error'}`}
+                                title={title}
+                                className={`p-1.5 rounded-lg transition-colors ${blocked ? 'opacity-25 cursor-not-allowed text-secondary' : 'hover:bg-error-container text-secondary hover:text-error'}`}
                               >
                                 <span className="material-symbols-outlined text-[16px]">delete</span>
                               </button>
