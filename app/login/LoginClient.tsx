@@ -38,37 +38,78 @@ export default function LoginClient() {
     router.refresh()
   }
 
+  const floatingCards = [
+    { icon: 'person_add', label: 'Nouvel employé', value: '+1 aujourd\'hui', color: '#1A56DB', delay: '0s', x: '6%', y: '12%' },
+    { icon: 'payments', label: 'Paie du mois', value: 'En cours', color: '#0D9488', delay: '1.5s', x: '72%', y: '8%' },
+    { icon: 'event_busy', label: 'Congés en attente', value: '3 demandes', color: '#F59E0B', delay: '3s', x: '78%', y: '62%' },
+    { icon: 'description', label: 'Contrats actifs', value: '24 contrats', color: '#7C3AED', delay: '0.8s', x: '4%', y: '68%' },
+    { icon: 'school', label: 'Formation', value: 'Planifiée', color: '#0D9488', delay: '2.2s', x: '60%', y: '80%' },
+    { icon: 'groups', label: 'Effectif total', value: '48 employés', color: '#1A56DB', delay: '4s', x: '20%', y: '78%' },
+  ]
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0f172a]">
-
-      {/* Orbes animés */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] animate-[drift1_12s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/20 blur-[120px] animate-[drift2_15s_ease-in-out_infinite]" />
-        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] rounded-full bg-sky-400/10 blur-[100px] animate-[drift3_18s_ease-in-out_infinite]" />
-      </div>
-
-      {/* Grille subtile */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }}
-      />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}>
 
       <style>{`
-        @keyframes drift1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(40px, -30px) scale(1.05); }
-          66% { transform: translate(-20px, 40px) scale(0.97); }
+        @keyframes floatCard {
+          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.85; }
+          50% { transform: translateY(-14px) rotate(1deg); opacity: 1; }
         }
-        @keyframes drift2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-50px, 30px) scale(1.08); }
-          66% { transform: translate(30px, -40px) scale(0.95); }
+        @keyframes pulse-dot {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.6; }
         }
-        @keyframes drift3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-60px, -50px) scale(1.1); }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scanline {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100vh); }
         }
       `}</style>
+
+      {/* Grille de fond */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)', backgroundSize: '60px 60px' }}
+      />
+
+      {/* Ligne de scan animée */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute left-0 right-0 h-[2px] opacity-[0.04]"
+          style={{ background: 'linear-gradient(90deg,transparent,#60a5fa,transparent)', animation: 'scanline 8s linear infinite' }}
+        />
+      </div>
+
+      {/* Cartes flottantes RH */}
+      {floatingCards.map((card, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none hidden lg:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border backdrop-blur-sm"
+          style={{
+            left: card.x, top: card.y,
+            background: 'rgba(255,255,255,0.05)',
+            borderColor: 'rgba(255,255,255,0.1)',
+            boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)`,
+            animation: `floatCard ${6 + i * 0.7}s ease-in-out infinite`,
+            animationDelay: card.delay,
+          }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${card.color}22` }}>
+            <span className="material-symbols-outlined text-[16px]" style={{ color: card.color }}>{card.icon}</span>
+          </div>
+          <div>
+            <p className="text-[10px] text-white/50 leading-none mb-0.5">{card.label}</p>
+            <p className="text-[12px] font-semibold text-white/90 leading-none">{card.value}</p>
+          </div>
+          <div className="w-1.5 h-1.5 rounded-full ml-1 flex-shrink-0" style={{ backgroundColor: card.color, animation: `pulse-dot 2s ease-in-out infinite`, animationDelay: card.delay }} />
+        </div>
+      ))}
+
+      {/* Lueur centrale douce */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[600px] h-[600px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)' }} />
+      </div>
       <div className="bg-surface rounded-xl shadow-level-1 border border-outline-variant w-full max-w-md p-6">
         {/* Logo */}
         <div className="text-center mb-6">
