@@ -258,12 +258,23 @@ export default function LeavesPage() {
       )}
 
       {deleteConfirm !== null && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-surface p-5 rounded-xl shadow-level-3 border border-outline-variant w-80">
-            <p className="text-body-lg font-medium mb-4">Supprimer cette demande de congé ?</p>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1.5 border border-outline text-secondary rounded-lg text-label-md hover:bg-surface-container-low">Annuler</button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="px-3 py-1.5 bg-error text-on-error rounded-lg text-label-md hover:opacity-90">Supprimer</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-sm overflow-hidden">
+            <div className="p-5 flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-error-container flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-[22px] text-error">event_busy</span>
+              </div>
+              <h3 className="text-title-sm font-semibold text-on-surface mb-1">Supprimer la demande ?</h3>
+              <p className="text-body-md text-secondary mb-4">Cette demande de congé sera définitivement supprimée.</p>
+              <div className="w-full p-3 bg-error-container/50 rounded-xl text-caption text-error text-left">
+                Cette action est irréversible.
+              </div>
+            </div>
+            <div className="flex gap-3 px-5 pb-5">
+              <button onClick={() => setDeleteConfirm(null)} className="btn-secondary flex-1">Annuler</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-error text-on-error rounded-xl text-label-md font-semibold hover:opacity-90 transition-all">
+                Supprimer
+              </button>
             </div>
           </div>
         </div>

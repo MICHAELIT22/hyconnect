@@ -105,6 +105,8 @@ function SettingsInner() {
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'STAFF', displayName: '', department: '' })
   const [creatingUser, setCreatingUser] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState<AppUser | null>(null)
+  const [deletingUser, setDeletingUser] = useState(false)
 
   // Salary
   const [salary, setSalary] = useState<Record<string, string>>({})
@@ -263,14 +265,18 @@ function SettingsInner() {
     }
   }
 
-  async function deleteUser(id: number) {
-    if (!confirm('Supprimer cet utilisateur ?')) return
+  async function deleteUser() {
+    if (!deleteUserConfirm) return
+    setDeletingUser(true)
     try {
-      await axios.post('/api/settings', { action: 'delete_user', data: { userId: id } })
-      setUsers(u => u.filter(u => u.id !== id))
+      await axios.post('/api/settings', { action: 'delete_user', data: { userId: deleteUserConfirm.id } })
+      setUsers(u => u.filter(u => u.id !== deleteUserConfirm.id))
+      setDeleteUserConfirm(null)
       showToast('Utilisateur supprimé')
     } catch (err: any) {
       showToast(err.response?.data?.error || 'Erreur lors de la suppression', 'error')
+    } finally {
+      setDeletingUser(false)
     }
   }
 
@@ -683,7 +689,7 @@ function SettingsInner() {
                             const title = isRootAdmin ? 'Compte administrateur principal — non supprimable' : isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : 'Supprimer'
                             return (
                               <button
-                                onClick={() => !blocked && deleteUser(user.id)}
+                                onClick={() => !blocked && setDeleteUserConfirm(user)}
                                 disabled={blocked}
                                 title={title}
                                 className={`p-1.5 rounded-lg transition-colors ${blocked ? 'opacity-25 cursor-not-allowed text-secondary' : 'hover:bg-error-container text-secondary hover:text-error'}`}
@@ -797,44 +803,109 @@ function SettingsInner() {
 
       {/* ── Modal Nouvel utilisateur ── */}
       {showNewUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-xl shadow-level-3 border border-outline-variant w-[460px] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
-              <h3 className="text-title-sm font-semibold text-on-surface">Nouvel utilisateur</h3>
-              <button onClick={() => setShowNewUser(false)} className="p-1 rounded-full hover:bg-surface-container-high text-secondary">
-                <span className="material-symbols-outlined text-[20px]">close</span>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[18px] text-primary">person_add</span>
+                </div>
+                <div>
+                  <h3 className="text-title-sm font-semibold text-on-surface">Nouvel utilisateur</h3>
+                  <p className="text-caption text-secondary">Créer un nouveau compte d'accès</p>
+                </div>
+              </div>
+              <button onClick={() => setShowNewUser(false)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-surface-container text-secondary transition-colors">
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
-            <div className="p-4 space-y-3">
-              {[
-                { name: 'username', label: "Nom d'utilisateur *", type: 'text' },
-                { name: 'password', label: 'Mot de passe *', type: 'password' },
-                { name: 'displayName', label: "Nom d'affichage", type: 'text' },
-                { name: 'department', label: 'Département', type: 'text' },
-              ].map(f => (
-                <div key={f.name}>
-                  <label className="text-body-md font-medium text-on-surface block mb-1">{f.label}</label>
-                  <input type={f.type} value={(newUser as any)[f.name]} onChange={e => setNewUser(u => ({ ...u, [f.name]: e.target.value }))} className={ic} />
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-label-md text-on-surface-variant mb-1.5">Nom d'utilisateur *</label>
+                  <input type="text" value={newUser.username} onChange={e => setNewUser(u => ({ ...u, username: e.target.value }))} className={ic} placeholder="ex: jean.dupont" autoFocus />
                 </div>
-              ))}
-              <div>
-                <label className="text-body-md font-medium text-on-surface block mb-1">Rôle</label>
-                <div className="relative">
-                  <select value={newUser.role} onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))} className={`${ic} appearance-none pr-8`}>
-                    {['ADMIN', 'RH', 'ASSISTANT', 'STAFF'].map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[14px] text-on-surface-variant pointer-events-none">expand_more</span>
+                <div className="col-span-2">
+                  <label className="block text-label-md text-on-surface-variant mb-1.5">Mot de passe * <span className="text-secondary font-normal">(min. 6 caractères)</span></label>
+                  <input type="password" value={newUser.password} onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} className={ic} placeholder="••••••••" />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-1.5">Nom d'affichage</label>
+                  <input type="text" value={newUser.displayName} onChange={e => setNewUser(u => ({ ...u, displayName: e.target.value }))} className={ic} placeholder="Jean Dupont" />
+                </div>
+                <div>
+                  <label className="block text-label-md text-on-surface-variant mb-1.5">Département</label>
+                  <input type="text" value={newUser.department} onChange={e => setNewUser(u => ({ ...u, department: e.target.value }))} className={ic} placeholder="RH, Finance..." />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-label-md text-on-surface-variant mb-1.5">Rôle</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: 'ADMIN', label: 'Admin', icon: 'shield', color: 'text-error', bg: 'bg-error-container' },
+                      { value: 'RH', label: 'RH', icon: 'manage_accounts', color: 'text-primary', bg: 'bg-primary/10' },
+                      { value: 'ASSISTANT', label: 'Assistant', icon: 'support_agent', color: 'text-secondary', bg: 'bg-secondary-container' },
+                      { value: 'STAFF', label: 'Employé', icon: 'person', color: 'text-on-surface-variant', bg: 'bg-surface-variant' },
+                    ].map(r => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setNewUser(u => ({ ...u, role: r.value }))}
+                        className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all text-center ${newUser.role === r.value ? `border-primary ${r.bg}` : 'border-outline-variant hover:border-outline hover:bg-surface-container-low'}`}
+                      >
+                        <span className={`material-symbols-outlined text-[18px] ${newUser.role === r.value ? r.color : 'text-secondary'}`}>{r.icon}</span>
+                        <span className={`text-caption font-medium ${newUser.role === r.value ? r.color : 'text-secondary'}`}>{r.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 border-t border-outline-variant">
-              <button onClick={() => setShowNewUser(false)} className="px-4 py-2 border border-outline text-secondary rounded-lg text-label-md hover:bg-surface-container-low">Annuler</button>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-outline-variant">
+              <button onClick={() => setShowNewUser(false)} className="btn-secondary">Annuler</button>
               <button
                 onClick={createUser}
                 disabled={creatingUser || !newUser.username || !newUser.password}
-                className="px-4 py-2 bg-primary text-on-primary rounded-lg text-label-md font-semibold hover:bg-primary-fixed-variant disabled:opacity-50 transition-colors"
+                className="btn-primary disabled:opacity-50"
               >
-                {creatingUser ? 'Création...' : 'Créer'}
+                {creatingUser && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {creatingUser ? 'Création...' : 'Créer le compte'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Supprimer utilisateur ── */}
+      {deleteUserConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-sm overflow-hidden">
+            <div className="p-5 flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-error-container flex items-center justify-center mb-3">
+                <span className="material-symbols-outlined text-[22px] text-error">person_remove</span>
+              </div>
+              <h3 className="text-title-sm font-semibold text-on-surface mb-1">Supprimer l'utilisateur ?</h3>
+              <p className="text-body-md text-secondary mb-1">
+                Vous allez supprimer le compte de
+              </p>
+              <p className="text-body-md font-semibold text-on-surface mb-1">
+                {deleteUserConfirm.displayName || deleteUserConfirm.username}
+              </p>
+              <p className="text-caption text-secondary mb-4">
+                @{deleteUserConfirm.username} · {deleteUserConfirm.role}
+              </p>
+              <div className="w-full p-3 bg-error-container/50 rounded-xl text-caption text-error text-left">
+                Cette action est irréversible. L'utilisateur perdra immédiatement l'accès à l'application.
+              </div>
+            </div>
+            <div className="flex gap-3 px-5 pb-5">
+              <button onClick={() => setDeleteUserConfirm(null)} className="btn-secondary flex-1">Annuler</button>
+              <button
+                onClick={deleteUser}
+                disabled={deletingUser}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-error text-on-error rounded-xl text-label-md font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+              >
+                {deletingUser && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {deletingUser ? 'Suppression...' : 'Supprimer'}
               </button>
             </div>
           </div>
