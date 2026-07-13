@@ -65,7 +65,7 @@ const TABS = [
   { id: 'temps', label: 'Temps & Présence' },
   { id: 'paie', label: 'Paie' },
   { id: 'documents', label: 'Documents' },
-  { id: 'evaluation', label: 'Évaluation' },
+  { id: 'formations', label: 'Formations' },
 ]
 
 const COUNTRIES = ['Togo', 'Bénin', 'Ghana', 'Côte d\'Ivoire', 'Sénégal', 'Mali', 'Burkina Faso', 'Niger', 'Cameroun', 'Nigeria', 'France', 'Autre']
@@ -556,49 +556,87 @@ function EmployeeDetailContent() {
 
   // ── CONGÉS ───────────────────────────────────────────────────────────────────
   const totalAllowance = employee.contracts[0]?.annualLeaveDays ?? 0
+  const usedDays = approvedDays
+  const remainingDays = Math.max(0, totalAllowance - usedDays)
+  const leaveProgress = totalAllowance > 0 ? Math.min(100, Math.round((usedDays / totalAllowance) * 100)) : 0
+  const LEAVE_STATUS: Record<string, { label: string; cls: string }> = {
+    APPROVED: { label: 'Approuvé', cls: 'bg-tertiary/10 text-tertiary' },
+    REJECTED: { label: 'Refusé', cls: 'bg-error/10 text-error' },
+    PENDING: { label: 'En attente', cls: 'bg-warning/10 text-warning' },
+    CANCELLED: { label: 'Annulé', cls: 'bg-surface-container text-secondary border border-outline-variant' },
+  }
   const congesTab = (
-    <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
-        <h3 className="text-body-md font-semibold">Gestion des congés</h3>
-        <button onClick={() => { setLeaveError(''); setShowLeave(true) }} className="btn-primary">
-          <span className="material-symbols-outlined text-[13px]">add</span>
-          Enregistrer un congé
-        </button>
+    <div className="space-y-4">
+      {/* Soldes */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { icon: 'check_circle', label: 'Jours utilisés', value: usedDays, color: 'text-primary', bg: 'bg-primary/5 border-primary/20' },
+          { icon: 'event_available', label: 'Jours restants', value: remainingDays, color: 'text-tertiary', bg: 'bg-tertiary/5 border-tertiary/20' },
+          { icon: 'pending', label: 'En attente', value: pendingCount, color: 'text-warning', bg: 'bg-warning/5 border-warning/20' },
+        ].map(card => (
+          <div key={card.label} className={`rounded-xl border p-4 ${card.bg}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`material-symbols-outlined text-[16px] ${card.color}`}>{card.icon}</span>
+              <p className="text-caption text-secondary">{card.label}</p>
+            </div>
+            <p className={`text-[28px] font-bold leading-none ${card.color}`}>{card.value}</p>
+            <p className="text-caption text-secondary mt-1">jours</p>
+          </div>
+        ))}
       </div>
-      <div className="p-4">
-        <h4 className="text-body-md font-semibold mb-2">Soldes de congés</h4>
-        <div className="flex items-center justify-between py-2 border-b border-outline-variant">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px] text-on-surface-variant">beach_access</span>
-            <span className="text-body-md">Congé Annuel</span>
+
+      {/* Barre de progression */}
+      {totalAllowance > 0 && (
+        <div className="bg-surface rounded-xl border border-outline-variant p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-body-md font-medium text-on-surface">Congés annuels</span>
+            <span className="text-body-md text-secondary">{usedDays} / {totalAllowance} jours</span>
           </div>
-          <span className="text-body-md font-medium">{approvedDays} / {totalAllowance} jours</span>
+          <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${leaveProgress}%` }} />
+          </div>
+          <p className="text-caption text-secondary mt-1">{leaveProgress}% du solde annuel utilisé</p>
         </div>
-        <div className="flex items-center justify-between mb-3 mt-4">
-          <h4 className="text-body-md font-semibold">Historique des congés</h4>
-          <div className="flex gap-2">
-            <select className="text-caption border border-outline-variant rounded px-2 py-1 bg-surface-container"><option>Année en cours</option></select>
-            <select className="text-caption border border-outline-variant rounded px-2 py-1 bg-surface-container"><option>Tous les types</option></select>
-          </div>
+      )}
+
+      {/* Historique */}
+      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+          <h3 className="text-body-md font-semibold text-on-surface">Historique des congés</h3>
+          <button onClick={() => { setLeaveError(''); setShowLeave(true) }} className="btn-primary" style={{ padding: '4px 12px', fontSize: '12px' }}>
+            <span className="material-symbols-outlined text-[13px]">add</span>
+            Nouveau congé
+          </button>
         </div>
         {employee.leaves.length === 0 ? (
-          <div className="text-center py-8">
-            <span className="material-symbols-outlined text-[32px] text-on-surface-variant">calendar_today</span>
-            <p className="text-body-md text-on-surface-variant mt-2">Aucune demande de congé trouvée</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-3">
+              <span className="material-symbols-outlined text-[22px] text-on-surface-variant">beach_access</span>
+            </div>
+            <p className="text-body-md font-medium text-on-surface">Aucun congé enregistré</p>
+            <p className="text-caption text-secondary mt-1">Les demandes de congé apparaîtront ici</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {employee.leaves.map(l => (
-              <div key={l.id} className="flex items-center justify-between py-2 border-b border-outline-variant last:border-0">
-                <div>
-                  <p className="text-body-md font-medium">{l.type}</p>
-                  <p className="text-caption text-secondary">{new Date(l.startDate).toLocaleDateString('fr-FR')} – {new Date(l.endDate).toLocaleDateString('fr-FR')}</p>
+          <div className="divide-y divide-outline-variant">
+            {employee.leaves.map(l => {
+              const days = Math.ceil((new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / 86400000) + 1
+              const st = LEAVE_STATUS[l.status] ?? { label: l.status, cls: 'bg-surface-container text-secondary' }
+              return (
+                <div key={l.id} className="flex items-center gap-4 px-4 py-3 hover:bg-surface-container-lowest transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-[16px] text-primary">beach_access</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body-md font-semibold text-on-surface">{l.type}</p>
+                    <p className="text-caption text-secondary">
+                      {new Date(l.startDate).toLocaleDateString('fr-FR')} → {new Date(l.endDate).toLocaleDateString('fr-FR')}
+                      <span className="ml-2 font-medium text-on-surface-variant">{days}j</span>
+                    </p>
+                  </div>
+                  <span className={`text-caption px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${st.cls}`}>{st.label}</span>
                 </div>
-                <span className={`text-caption px-2 py-0.5 rounded-full ${l.status === 'APPROVED' ? 'bg-tertiary/10 text-tertiary' : l.status === 'REJECTED' ? 'bg-error/10 text-error' : 'bg-warning/10 text-warning'}`}>
-                  {l.status}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -627,52 +665,88 @@ function EmployeeDetailContent() {
 
   const tempsTab = (
     <div className="space-y-4">
+      {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-surface rounded-xl border border-outline-variant p-4">
-          <p className="text-caption text-on-surface-variant">Heures ce mois</p>
-          <p className="text-display-lg font-bold text-on-surface mt-1">{totalHours}h</p>
-          <p className="text-caption text-secondary">/ {workingDays * 8}h</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[15px] text-primary">schedule</span>
+            </div>
+            <p className="text-caption text-secondary">Heures ce mois</p>
+          </div>
+          <p className="text-[28px] font-bold text-on-surface leading-none">{totalHours}<span className="text-title-sm font-normal text-secondary ml-1">h</span></p>
+          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
+            <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, Math.round((totalHours / (workingDays * 8)) * 100))}%` }} />
+          </div>
+          <p className="text-caption text-secondary mt-1">sur {workingDays * 8}h prévues</p>
         </div>
-        <div className={`bg-surface rounded-xl border p-4 ${attendanceRate < 80 ? 'border-warning' : 'border-outline-variant'}`}>
-          <p className="text-caption text-on-surface-variant">Taux de présence</p>
-          <p className={`text-display-lg font-bold mt-1 ${attendanceRate < 80 ? 'text-warning' : 'text-on-surface'}`}>{attendanceRate}%</p>
-          <p className={`text-caption ${attendanceRate < 80 ? 'text-warning' : 'text-secondary'}`}>{attendanceRate < 80 ? 'Sous l\'objectif' : 'Objectif atteint'}</p>
+        <div className={`bg-surface rounded-xl border p-4 ${attendanceRate < 80 ? 'border-warning/50' : 'border-outline-variant'}`}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attendanceRate < 80 ? 'bg-warning/10' : 'bg-tertiary/10'}`}>
+              <span className={`material-symbols-outlined text-[15px] ${attendanceRate < 80 ? 'text-warning' : 'text-tertiary'}`}>fingerprint</span>
+            </div>
+            <p className="text-caption text-secondary">Taux de présence</p>
+          </div>
+          <p className={`text-[28px] font-bold leading-none ${attendanceRate < 80 ? 'text-warning' : 'text-tertiary'}`}>{attendanceRate}<span className="text-title-sm font-normal ml-0.5">%</span></p>
+          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${attendanceRate < 80 ? 'bg-warning' : 'bg-tertiary'}`} style={{ width: `${attendanceRate}%` }} />
+          </div>
+          <p className={`text-caption mt-1 ${attendanceRate < 80 ? 'text-warning' : 'text-secondary'}`}>{attendanceRate < 80 ? 'Sous l\'objectif (80%)' : 'Objectif atteint'}</p>
         </div>
         <div className="bg-surface rounded-xl border border-outline-variant p-4">
-          <p className="text-caption text-on-surface-variant">Série de pointage</p>
-          <p className="text-display-lg font-bold text-on-surface mt-1">0</p>
-          <p className="text-caption text-secondary">0 jours consécutifs</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
+              <span className="material-symbols-outlined text-[15px] text-on-surface-variant">event_available</span>
+            </div>
+            <p className="text-caption text-secondary">Jours présents</p>
+          </div>
+          <p className="text-[28px] font-bold text-on-surface leading-none">{presentDays}<span className="text-title-sm font-normal text-secondary ml-1">j</span></p>
+          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
+            <div className="h-full bg-on-surface-variant rounded-full" style={{ width: `${Math.min(100, Math.round((presentDays / workingDays) * 100))}%` }} />
+          </div>
+          <p className="text-caption text-secondary mt-1">sur {workingDays} jours ouvrés</p>
         </div>
       </div>
 
+      {/* Historique mensuel */}
       <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-outline-variant"><h3 className="text-body-md font-semibold">Résumé mensuel</h3></div>
-        <div className="px-4 py-3 flex items-center justify-between">
-          <span className="text-body-md text-on-surface-variant">Heures ce mois</span>
-          <span className="text-body-md font-medium">{totalHours}h / {workingDays * 8}h</span>
+        <div className="px-4 py-3 border-b border-outline-variant">
+          <h3 className="text-body-md font-semibold text-on-surface">Historique de présence</h3>
+          <p className="text-caption text-secondary mt-0.5">12 derniers mois</p>
         </div>
-      </div>
-
-      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-outline-variant"><h3 className="text-body-md font-semibold">Historique de présence</h3></div>
-        <div className="divide-y divide-outline-variant">
-          {last12.map(month => {
-            const entries = byMonth[month] || []
-            const p = entries.filter(a => !a.absence).length
-            const h = entries.reduce((acc, a) => acc + (a.overtime || 0), 0)
-            const r = entries.length > 0 ? Math.round((p / entries.length) * 100) : 0
-            return (
-              <div key={month} className="px-4 py-2 flex items-center justify-between">
-                <span className="text-body-md capitalize">{month}</span>
-                <div className="flex items-center gap-6 text-caption text-secondary">
-                  <span>{entries.length} jours</span>
-                  <span>{h}h</span>
-                  <span className={r > 0 && r < 80 ? 'text-warning' : r === 0 ? 'text-secondary' : 'text-tertiary'}>{r}%</span>
+        {employee.attendances.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-3">
+              <span className="material-symbols-outlined text-[22px] text-on-surface-variant">fingerprint</span>
+            </div>
+            <p className="text-body-md font-medium text-on-surface">Aucune donnée de présence</p>
+            <p className="text-caption text-secondary mt-1">Les pointages apparaîtront ici</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-outline-variant">
+            {last12.map(month => {
+              const entries = byMonth[month] || []
+              const p = entries.filter(a => !a.absence).length
+              const h = entries.reduce((acc, a) => acc + (a.overtime || 0), 0)
+              const r = entries.length > 0 ? Math.round((p / entries.length) * 100) : 0
+              return (
+                <div key={month} className="flex items-center gap-4 px-4 py-3 hover:bg-surface-container-lowest transition-colors">
+                  <p className="text-body-md capitalize text-on-surface w-28 flex-shrink-0">{month}</p>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-surface-container rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${r < 80 && r > 0 ? 'bg-warning' : 'bg-tertiary'}`} style={{ width: `${r}%` }} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-caption text-secondary w-36 flex-shrink-0 justify-end">
+                    <span>{entries.length}j</span>
+                    <span>{h}h sup.</span>
+                    <span className={`font-medium w-8 text-right ${r > 0 && r < 80 ? 'text-warning' : r === 0 ? 'text-secondary' : 'text-tertiary'}`}>{r}%</span>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -884,12 +958,63 @@ function EmployeeDetailContent() {
     </div>
   )
 
-  // ── ÉVALUATION ───────────────────────────────────────────────────────────────
-  const evaluationTab = (
-    <div className="bg-surface rounded-xl border border-outline-variant p-8 flex flex-col items-center justify-center min-h-[200px]">
-      <span className="material-symbols-outlined text-[40px] text-on-surface-variant mb-3">star_rate</span>
-      <p className="text-body-md text-on-surface-variant">Aucune évaluation enregistrée pour cet employé.</p>
-      <p className="text-caption text-secondary mt-1">Les évaluations de performance seront disponibles ici.</p>
+  // ── FORMATIONS ───────────────────────────────────────────────────────────────
+  const formationsTab = (
+    <div className="space-y-4">
+      {/* KPI */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Formations suivies', value: employee.trainings.length, icon: 'school', color: 'text-primary', bg: 'bg-primary/10' },
+          { label: 'Certifiées', value: employee.trainings.filter(t => t.certificate).length, icon: 'verified', color: 'text-tertiary', bg: 'bg-tertiary/10' },
+          { label: 'Cette année', value: employee.trainings.filter(t => new Date(t.date).getFullYear() === new Date().getFullYear()).length, icon: 'calendar_today', color: 'text-secondary', bg: 'bg-surface-container' },
+        ].map(card => (
+          <div key={card.label} className="bg-surface rounded-xl border border-outline-variant p-4 flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${card.bg}`}>
+              <span className={`material-symbols-outlined text-[20px] ${card.color}`}>{card.icon}</span>
+            </div>
+            <div>
+              <p className="text-[24px] font-bold text-on-surface leading-none">{card.value}</p>
+              <p className="text-caption text-secondary mt-0.5">{card.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Liste */}
+      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
+        <div className="px-4 py-3 border-b border-outline-variant">
+          <h3 className="text-body-md font-semibold text-on-surface">Historique des formations</h3>
+        </div>
+        {employee.trainings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-3">
+              <span className="material-symbols-outlined text-[22px] text-on-surface-variant">school</span>
+            </div>
+            <p className="text-body-md font-medium text-on-surface">Aucune formation enregistrée</p>
+            <p className="text-caption text-secondary mt-1">Les formations de cet employé apparaîtront ici</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-outline-variant">
+            {employee.trainings.map(t => (
+              <div key={t.id} className="flex items-center gap-4 px-4 py-3 hover:bg-surface-container-lowest transition-colors">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-[16px] text-primary">school</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-md font-semibold text-on-surface truncate">{t.title}</p>
+                  <p className="text-caption text-secondary">{t.organization} · {new Date(t.date).toLocaleDateString('fr-FR')}</p>
+                </div>
+                {t.certificate && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary/10 flex-shrink-0">
+                    <span className="material-symbols-outlined text-[12px] text-tertiary">verified</span>
+                    <span className="text-caption text-tertiary font-medium">Certifié</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 
@@ -901,7 +1026,7 @@ function EmployeeDetailContent() {
     temps: tempsTab,
     paie: paieTab,
     documents: documentsTab,
-    evaluation: evaluationTab,
+    formations: formationsTab,
   }
 
   return (
