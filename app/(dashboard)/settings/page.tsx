@@ -135,16 +135,13 @@ function SettingsInner() {
       const fd = new FormData()
       fd.append('file', file)
       fd.append('folder', 'logos')
-      console.log('[Upload] sending file:', file.name, file.size, file.type)
       const { data } = await axios.post('/api/upload', fd)
-      console.log('[Upload] response:', data)
-      if (!data.url) throw new Error('Pas d\'URL dans la réponse')
+      if (!data.url) throw new Error("Pas d'URL dans la réponse")
       setCompany(c => ({ ...c, company_logo: data.url }))
       await axios.put('/api/settings', { section: 'company', data: { company_logo: data.url } })
       window.dispatchEvent(new CustomEvent('logo-updated'))
       showToast('Logo téléchargé et enregistré')
     } catch (err: any) {
-      console.error('[Upload] error:', err?.response?.data || err?.message || err)
       showToast(err?.response?.data?.error || 'Erreur lors du téléchargement', 'error')
     } finally {
       setLogoUploading(false)

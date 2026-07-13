@@ -103,7 +103,7 @@ export default function Topbar({ user }: { user: User }) {
                 <Link href="/employees/new" onClick={() => setQuickOpen(false)} className="w-full flex items-center gap-3 px-4 py-2 text-body-md text-on-surface hover:bg-surface-container-low transition-colors">
                   <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person_add</span> Nouvel employé
                 </Link>
-                <Link href="/contracts" onClick={() => setQuickOpen(false)} className="w-full flex items-center gap-3 px-4 py-2 text-body-md text-on-surface hover:bg-surface-container-low transition-colors">
+                <Link href="/contracts/new" onClick={() => setQuickOpen(false)} className="w-full flex items-center gap-3 px-4 py-2 text-body-md text-on-surface hover:bg-surface-container-low transition-colors">
                   <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>description</span> Nouveau contrat
                 </Link>
                 <Link href="/documents" onClick={() => setQuickOpen(false)} className="w-full flex items-center gap-3 px-4 py-2 text-body-md text-on-surface hover:bg-surface-container-low transition-colors">

@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 
 export async function GET(req: NextRequest) {
+  try {
   const auth = await requireAuth()
   if (auth instanceof NextResponse) return auth
 
@@ -55,6 +56,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(result)
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Erreur serveur' }, { status: 500 })
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -123,30 +127,42 @@ export async function POST(req: NextRequest) {
 
   if (action === 'create_user') {
     const { username, password, role, displayName, department } = data
-    const hashed = await bcrypt.hash(password, 10)
-    const email = `${username}@hyconnect.local`
+    if (!username?.trim()) return NextResponse.json({ error: "Nom d'utilisateur requis" }, { status: 400 })
+    if (!password || password.length < 6) return NextResponse.json({ error: 'Mot de passe trop court (min 6 caractères)' }, { status: 400 })
 
-    const { error: authErr } = await sb.auth.admin.createUser({
+    const hashed = await bcrypt.hash(password, 10)
+    const email = `${username.trim()}@hyconnect.local`
+
+    // Vérifie si username déjà pris dans la table User
+    const { data: existing } = await sb.from('User').select('id').eq('username', username.trim()).maybeSingle()
+    if (existing) return NextResponse.json({ error: "Ce nom d'utilisateur existe déjà" }, { status: 400 })
+
+    // Créer dans Supabase Auth
+    const { data: authData, error: authErr } = await sb.auth.admin.createUser({
       email, password, email_confirm: true,
       user_metadata: { display_name: displayName || username },
     })
     if (authErr) return NextResponse.json({ error: authErr.message }, { status: 400 })
 
+    // Créer dans la table User
     const { data: user, error: dbErr } = await sb
       .from('User')
       .insert([{
-        username,
+        username: username.trim(),
         password: hashed,
         role,
-        displayName,
-        department,
+        displayName: displayName || username.trim(),
+        department: department || null,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       }])
-      .select()
+      .select('id,username,role,displayName,department,createdAt')
       .single()
 
-    if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 })
+    if (dbErr) {
+      // Rollback: supprimer l'utilisateur Auth si la DB échoue
+      if (authData?.user?.id) await sb.auth.admin.deleteUser(authData.user.id)
+      return NextResponse.json({ error: dbErr.message }, { status: 500 })
+    }
 
     return NextResponse.json(user, { status: 201 })
   }
