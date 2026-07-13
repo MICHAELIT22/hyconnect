@@ -33,8 +33,12 @@ export default function Topbar({ user }: { user: User }) {
     fetchLogo()
   }, [])
 
-  // Refetch logo à chaque changement de page (cas: sauvegarde dans Paramètres puis navigation)
   useEffect(() => { fetchLogo() }, [pathname, fetchLogo])
+
+  useEffect(() => {
+    window.addEventListener('logo-updated', fetchLogo)
+    return () => window.removeEventListener('logo-updated', fetchLogo)
+  }, [fetchLogo])
 
   const today = new Date()
   const dateStr = today.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -141,15 +145,10 @@ export default function Topbar({ user }: { user: User }) {
                   </div>
                 </div>
 
-                <Link href="/settings?tab=profile" onClick={() => setMenuOpen(false)}
+                <Link href="/settings?section=users" onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person</span>
                   Mon profil
-                </Link>
-                <Link href="/settings?tab=profile" onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                  Modifier mon profil
                 </Link>
                 <Link href="/settings" onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">

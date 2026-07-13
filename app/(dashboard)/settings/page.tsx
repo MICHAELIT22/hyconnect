@@ -137,7 +137,10 @@ function SettingsInner() {
       fd.append('folder', 'logos')
       const { data } = await axios.post('/api/upload', fd)
       setCompany(c => ({ ...c, company_logo: data.url }))
-      showToast('Logo téléchargé avec succès')
+      // Save immediately to DB so Topbar can pick it up
+      await axios.put('/api/settings', { section: 'company', data: { company_logo: data.url } })
+      window.dispatchEvent(new CustomEvent('logo-updated'))
+      showToast('Logo téléchargé et enregistré')
     } catch {
       showToast('Erreur lors du téléchargement', 'error')
     } finally {
