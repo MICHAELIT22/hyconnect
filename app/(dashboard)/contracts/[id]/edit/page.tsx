@@ -61,7 +61,7 @@ function computeTrialEndDate(startDate: string, trialDays: string): string {
   return d.toISOString().split('T')[0]
 }
 
-function buildContractHTML(form: any, emp: Employee | null): string {
+function buildContractHTML(form: any, emp: Employee | null, companyName: string): string {
   const empName = emp ? `${emp.firstName} ${emp.lastName}` : '______'
   const trialText = form.trialDays ? `${form.trialDays} jours (${Math.round(parseInt(form.trialDays) / 30)} mois)` : 'Aucune'
   const trialEnd = computeTrialEndDate(form.startDate, form.trialDays)
@@ -73,7 +73,7 @@ function buildContractHTML(form: any, emp: Employee | null): string {
 
   return `
 <p>Le présent Contrat de Travail <strong>(« Contrat »)</strong> est conclu et prend effet le <u>${form.startDate ? new Date(form.startDate).toLocaleDateString('fr-FR') : '______'}</u>, entre :</p>
-<p><strong>Hyundai</strong>, ci-après dénommé <strong>« l'Employeur »</strong> ;</p>
+<p><strong>${companyName}</strong>, ci-après dénommé <strong>« l'Employeur »</strong> ;</p>
 <p>et</p>
 <p><strong>${empName}</strong> ${emp ? `(Matricule : ${emp.matricule})` : ''}, ci-après dénommé(e) <strong>« le Salarié »</strong> ;</p>
 <p>Ci-après collectivement dénommés <strong>« les Parties »</strong>.</p>
@@ -140,8 +140,15 @@ export default function EditContractPage() {
   const [fieldDropdownOpen, setFieldDropdownOpen] = useState(false)
   const [clauseDropdownOpen, setClauseDropdownOpen] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
+  const [companyName, setCompanyName] = useState<string>('Entreprise')
 
   const selectedEmp = employees.find(e => e.id === parseInt(form.employeeId)) ?? null
+
+  useEffect(() => {
+    axios.get('/api/settings?section=company').then(r => {
+      setCompanyName(r.data?.company_name || 'Entreprise')
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -196,7 +203,7 @@ export default function EditContractPage() {
   }
 
   function downloadPDF() {
-    const html = buildContractHTML(form, selectedEmp)
+    const html = buildContractHTML(form, selectedEmp, companyName)
     const win = window.open('', '_blank', 'width=900,height=700')
     if (!win) return
     win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contrat</title>
@@ -254,7 +261,7 @@ export default function EditContractPage() {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
   }
 
-  const contractHTML = buildContractHTML(form, selectedEmp)
+  const contractHTML = buildContractHTML(form, selectedEmp, companyName)
 
   return (
     <div className="flex flex-col h-full">
