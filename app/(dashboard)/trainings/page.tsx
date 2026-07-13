@@ -83,8 +83,6 @@ export default function TrainingsPage() {
     setShowModal(true)
   }
 
-  const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
-
   const filtered = trainings.filter(t => !search || [t.title, t.organization, t.employee?.firstName, t.employee?.lastName].some(v => v?.toLowerCase().includes(search.toLowerCase())))
 
   return (
@@ -106,17 +104,20 @@ export default function TrainingsPage() {
         </div>
       </div>
 
-      <div className="card flex gap-3">
-        <select className={`${ic} w-48`} value={category} onChange={e => setCategory(e.target.value)}>
+      <div className="p-3 border border-outline-variant rounded-xl bg-surface flex flex-wrap gap-2 items-center">
+        <div className="relative w-56">
+          <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[13px]">search</span>
+          <input
+            className="w-full pl-7 pr-2 py-1 bg-surface border border-outline-variant rounded text-body-md focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Rechercher..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="">Toutes catégories</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <input
-          className={`${ic} flex-1`}
-          placeholder="Rechercher par employé, formation, organisme..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
       </div>
 
       {!loading && (
@@ -168,11 +169,11 @@ export default function TrainingsPage() {
                 filtered.map(t => (
                   <tr key={t.id} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
                     <td className="px-3 py-1.5">
-                      <p className="font-medium text-on-surface text-body-lg">{t.employee ? `${t.employee.firstName} ${t.employee.lastName}` : '—'}</p>
+                      <p className="font-medium text-on-surface text-body-md">{t.employee ? `${t.employee.firstName} ${t.employee.lastName}` : '—'}</p>
                       <p className="text-caption text-on-surface-variant">{t.employee?.department || ''}</p>
                     </td>
                     <td className="px-3 py-1.5">
-                      <p className="font-medium text-on-surface text-body-lg">{t.title}</p>
+                      <p className="font-medium text-on-surface text-body-md">{t.title}</p>
                       {t.category && <span className="text-caption bg-secondary-container px-2 py-0.5 rounded-full">{t.category}</span>}
                     </td>
                     <td className="px-3 py-1.5 text-body-md text-on-surface-variant">{t.organization}</td>

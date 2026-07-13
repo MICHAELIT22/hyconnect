@@ -106,8 +106,6 @@ export default function LeavesPage() {
   const approved = leaves.filter(l => l.status === 'APPROVED').length
   const inProgress = leaves.filter(l => l.status === 'APPROVED' && new Date(l.startDate) <= new Date() && new Date(l.endDate) >= new Date()).length
 
-  const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-lg text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -138,12 +136,12 @@ export default function LeavesPage() {
         ))}
       </div>
 
-      <div className="card flex gap-3">
-        <select className={`${ic} w-48`} value={type} onChange={e => setType(e.target.value)}>
+      <div className="p-3 border border-outline-variant rounded-xl bg-surface flex flex-wrap gap-2 items-center">
+        <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={type} onChange={e => setType(e.target.value)}>
           <option value="">Tous types</option>
           {LEAVE_TYPES.map(t => <option key={t} value={t}>{LEAVE_LABELS[t]}</option>)}
         </select>
-        <select className={`${ic} w-40`} value={status} onChange={e => setStatus(e.target.value)}>
+        <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={status} onChange={e => setStatus(e.target.value)}>
           <option value="">Tous statuts</option>
           <option value="PENDING">En attente</option>
           <option value="APPROVED">Approuvé</option>
@@ -164,7 +162,7 @@ export default function LeavesPage() {
             <div key={leave.id} className="card flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium text-on-surface text-body-lg">
+                  <p className="font-medium text-on-surface text-body-md">
                     {leave.employee ? `${leave.employee.firstName} ${leave.employee.lastName}` : '—'}
                   </p>
                   {leave.employee?.department && (

@@ -68,18 +68,18 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="relative">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-        <input className="input-field pl-10 w-full max-w-sm" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="relative w-64">
+        <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[13px]">search</span>
+        <input className="w-full pl-7 pr-2 py-1 bg-surface border border-outline-variant rounded text-body-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div className="card p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-outline-variant bg-surface">
+              <tr className="border-b border-outline-variant bg-surface-variant">
                 {['Matricule', 'Nom', 'Prénom', 'Sexe', 'Nationalité', 'Naissance', 'Embauche', 'Poste', 'Département', 'Service', 'Contrat', 'Fin contrat', 'Statut'].map(h => (
-                  <th key={h} className="text-left px-3 py-3 text-label-md font-semibold text-on-surface-variant whitespace-nowrap">{h}</th>
+                  <th key={h} className="text-left px-3 py-2 text-label-md font-semibold text-on-surface-variant uppercase whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -88,25 +88,25 @@ export default function RegisterPage() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-outline-variant animate-pulse">
                     {Array.from({ length: 13 }).map((_, j) => (
-                      <td key={j} className="px-3 py-2"><div className="h-3 bg-surface-variant rounded" /></td>
+                      <td key={j} className="px-3 py-1.5"><div className="h-3 bg-surface-variant rounded" /></td>
                     ))}
                   </tr>
                 ))
               ) : filtered.map(e => (
-                <tr key={e.id} className="border-b border-outline-variant hover:bg-surface/50">
-                  <td className="px-3 py-2 font-mono">{e.matricule}</td>
-                  <td className="px-3 py-2 font-medium">{e.lastName}</td>
-                  <td className="px-3 py-2">{e.firstName}</td>
-                  <td className="px-3 py-2">{e.sex}</td>
-                  <td className="px-3 py-2">{e.nationality}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">{new Date(e.birthDate).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">{new Date(e.hireDate).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-3 py-2">{e.position}</td>
-                  <td className="px-3 py-2">{e.department}</td>
-                  <td className="px-3 py-2">{e.service}</td>
-                  <td className="px-3 py-2"><span className="bg-secondary-container px-2 py-0.5 rounded-full">{e.contractType}</span></td>
-                  <td className="px-3 py-2 whitespace-nowrap">{e.contractEndDate ? new Date(e.contractEndDate).toLocaleDateString('fr-FR') : 'CDI'}</td>
-                  <td className="px-3 py-2">
+                <tr key={e.id} className="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+                  <td className="px-3 py-1.5 text-body-md font-mono text-secondary">{e.matricule}</td>
+                  <td className="px-3 py-1.5 text-body-md font-medium text-on-surface">{e.lastName}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface">{e.firstName}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant">{e.sex}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant">{e.nationality}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant whitespace-nowrap">{new Date(e.birthDate).toLocaleDateString('fr-FR')}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant whitespace-nowrap">{new Date(e.hireDate).toLocaleDateString('fr-FR')}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface">{e.position}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface">{e.department}</td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant">{e.service}</td>
+                  <td className="px-3 py-1.5"><span className="text-caption bg-secondary-container px-2 py-0.5 rounded-full">{e.contractType}</span></td>
+                  <td className="px-3 py-1.5 text-body-md text-on-surface-variant whitespace-nowrap">{e.contractEndDate ? new Date(e.contractEndDate).toLocaleDateString('fr-FR') : 'CDI'}</td>
+                  <td className="px-3 py-1.5">
                     <span className={e.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}>{e.status}</span>
                   </td>
                 </tr>
