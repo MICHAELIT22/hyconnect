@@ -128,7 +128,7 @@ export default function Sidebar() {
       {/* Footer */}
       {!collapsed && (
         <div className="mt-auto pt-4 border-t border-outline-variant text-caption text-secondary text-center">
-          HyConnect v2.0.0
+          HyConnect v1.0.0
         </div>
       )}
     </aside>
