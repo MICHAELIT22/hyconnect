@@ -151,12 +151,18 @@ export default function DocumentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="card flex gap-3 flex-wrap">
-        <select
-          className="input-field w-48"
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-        >
+      <div className="p-3 border border-outline-variant rounded-xl bg-surface flex flex-wrap gap-2 items-center">
+        <div className="relative w-56">
+          <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[13px]">search</span>
+          <input
+            type="text"
+            placeholder="Rechercher..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-7 pr-2 py-1 bg-surface border border-outline-variant rounded text-body-md focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="">Toutes catégories</option>
           <option value="Identité">Identité</option>
           <option value="Contrat">Contrat</option>
@@ -164,16 +170,6 @@ export default function DocumentsPage() {
           <option value="Médical">Médical</option>
           <option value="Autre">Autre</option>
         </select>
-        <div className="relative flex-1 min-w-48">
-          <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-          <input
-            type="text"
-            placeholder="Rechercher par nom ou employé…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="input-field w-full pl-8"
-          />
-        </div>
       </div>
 
       {/* Grid */}

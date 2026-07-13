@@ -137,19 +137,13 @@ export default function PayrollPage() {
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value=""
-            className="text-body-md border border-outline-variant rounded-lg px-2 py-1.5 bg-surface text-on-surface-variant"
-          >
-            <option value="">Tous</option>
-          </select>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[14px]">search</span>
+          <div className="relative w-52">
+            <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[13px]">search</span>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher par période o..."
-              className="pl-8 pr-3 py-1.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 w-52"
+              placeholder="Rechercher..."
+              className="w-full pl-7 pr-2 py-1 border border-outline-variant rounded text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>

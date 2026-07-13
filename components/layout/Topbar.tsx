@@ -11,6 +11,7 @@ export default function Topbar({ user }: { user: User }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const [photoPath, setPhotoPath] = useState<string | null>(null)
+  const [logoError, setLogoError] = useState(false)
 
   const displayName = user.user_metadata?.displayName || user.user_metadata?.username || user.email?.replace('@hyconnect.local', '') || 'Utilisateur'
   const userRole = user.user_metadata?.role === 'ADMIN' ? 'Administrateur RH' : (user.user_metadata?.role || 'Utilisateur')
@@ -92,7 +93,9 @@ export default function Topbar({ user }: { user: User }) {
             <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant flex-shrink-0">
               {photoPath
                 ? <img src={photoPath} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
+                : logoError
+                  ? <div className="w-full h-full bg-primary-container text-primary font-bold flex items-center justify-center text-title-sm">{displayName.charAt(0).toUpperCase()}</div>
+                  : <img src="/logo.png" alt="HyConnect" className="w-full h-full object-cover" onError={() => setLogoError(true)} />
               }
             </div>
             <div className="hidden sm:block text-left">
@@ -138,36 +141,16 @@ export default function Topbar({ user }: { user: User }) {
                   <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>settings</span>
                   Paramètres
                 </Link>
-                <button
-                  onClick={() => setMenuOpen(false)}
+                <Link href="/employees" onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>notifications</span>
-                  Notifications
-                </button>
-                <button
-                  onClick={() => setMenuOpen(false)}
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>group</span>
+                  Employés
+                </Link>
+                <Link href="/payroll" onClick={() => setMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>dark_mode</span>
-                  Mode sombre
-                </button>
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>translate</span>
-                  Langue
-                </button>
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>help</span>
-                  Aide
-                </button>
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-body-lg text-on-surface hover:bg-surface-container-low transition-colors">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>info</span>
-                  À propos
-                </button>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>payments</span>
+                  Paie
+                </Link>
 
                 <div className="border-t border-outline-variant mt-1 pt-1">
                   <button

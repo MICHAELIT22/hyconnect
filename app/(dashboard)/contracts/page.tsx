@@ -170,36 +170,27 @@ export default function ContractsPage() {
         </div>
 
         {/* Filters */}
-        <div className="px-4 py-2.5 border-b border-outline-variant flex flex-wrap items-center gap-2 bg-surface-container-lowest">
-          <div className="relative flex-1 min-w-48 max-w-72">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[16px]">search</span>
+        <div className="px-3 py-2 border-b border-outline-variant flex flex-wrap items-center gap-2 bg-surface-container-lowest">
+          <div className="relative w-56">
+            <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[13px]">search</span>
             <input
-              className="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              className="w-full pl-7 pr-2 py-1 bg-surface border border-outline-variant rounded text-body-md focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Rechercher..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <select
-            className="px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            value={type} onChange={e => setType(e.target.value)}
-          >
+          <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={type} onChange={e => setType(e.target.value)}>
             <option value="">Type</option>
             {CONTRACT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <select
-            className="px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            value={status} onChange={e => setStatus(e.target.value)}
-          >
+          <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={status} onChange={e => setStatus(e.target.value)}>
             <option value="">Statut</option>
             <option value="ACTIVE">Actif</option>
             <option value="EXPIRED">Expiré</option>
             <option value="TERMINATED">Résilié</option>
           </select>
-          <select
-            className="px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            value={department} onChange={e => setDepartment(e.target.value)}
-          >
+          <select className="border border-outline-variant rounded text-body-md bg-surface-container py-1 px-2" value={department} onChange={e => setDepartment(e.target.value)}>
             <option value="">Département</option>
             {departments.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
