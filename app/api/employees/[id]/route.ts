@@ -49,6 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     currency: _cur, language: _lang, sendInvite: _si,
     contracts: _contracts, leaves: _leaves, attendances: _att,
     trainings: _trainings, medicals: _med, documents: _docs,
+    notes: _notes,
     ...employeeFields
   } = data
 

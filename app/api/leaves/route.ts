@@ -51,11 +51,13 @@ export async function POST(req: NextRequest) {
   const { data: leave, error } = await sb
     .from('Leave')
     .insert([{
-      ...data,
+      employeeId: data.employeeId,
+      type: data.type,
       startDate: new Date(data.startDate).toISOString(),
       endDate: new Date(data.endDate).toISOString(),
+      reason: data.reason || null,
+      status: data.status || 'PENDING',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     }])
     .select('*, Employee(id,firstName,lastName)')
     .single()

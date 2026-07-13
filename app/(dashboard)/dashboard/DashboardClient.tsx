@@ -98,8 +98,15 @@ export default function DashboardClient() {
     todoItems,
   } = data
 
+  const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+  const now = new Date()
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
+    return MONTHS_FR[d.getMonth()]
+  })
+
   const lineChartData = {
-    labels: ['Jan', 'Mar', 'Mai', 'Juil', 'Sep', 'Nov'],
+    labels: last6Months,
     datasets: [{
       label: 'Effectif',
       data: headcountEvolution,

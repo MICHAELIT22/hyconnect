@@ -10,14 +10,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
   const data = await req.json()
 
+  const updatePayload: Record<string, any> = {}
+  if (data.status !== undefined) updatePayload.status = data.status
+  if (data.type !== undefined) updatePayload.type = data.type
+  if (data.reason !== undefined) updatePayload.reason = data.reason
+  if (data.startDate) updatePayload.startDate = new Date(data.startDate).toISOString()
+  if (data.endDate) updatePayload.endDate = new Date(data.endDate).toISOString()
+
   const { data: leave, error } = await sb
     .from('Leave')
-    .update({
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
-      updatedAt: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', parseInt(id))
     .select()
     .single()

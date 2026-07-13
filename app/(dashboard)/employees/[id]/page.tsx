@@ -125,7 +125,7 @@ function EmployeeDetailContent() {
 
   // Congé modal
   const [showLeave, setShowLeave] = useState(false)
-  const [leaveForm, setLeaveForm] = useState({ type: 'Congé annuel', startDate: '', endDate: '', reason: '' })
+  const [leaveForm, setLeaveForm] = useState({ type: 'ANNUAL', startDate: '', endDate: '', reason: '' })
   const [leaveSaving, setLeaveSaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
 
@@ -244,7 +244,7 @@ function EmployeeDetailContent() {
     try {
       await axios.post('/api/leaves', { ...leaveForm, employeeId: Number(id) })
       setShowLeave(false)
-      setLeaveForm({ type: 'Congé annuel', startDate: '', endDate: '', reason: '' })
+      setLeaveForm({ type: 'ANNUAL', startDate: '', endDate: '', reason: '' })
       load()
     } catch (e: any) { setLeaveError(e.response?.data?.error || 'Erreur') }
     finally { setLeaveSaving(false) }
@@ -1152,12 +1152,12 @@ function EmployeeDetailContent() {
             <div>
               <label className="block text-label-md text-on-surface-variant mb-1.5">Type de congé</label>
               <select value={leaveForm.type} onChange={e => setLeaveForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
-                <option>Congé annuel</option>
-                <option>Congé maladie</option>
-                <option>Congé maternité</option>
-                <option>Congé paternité</option>
-                <option>Congé sans solde</option>
-                <option>Autre</option>
+                <option value="ANNUAL">Congé annuel</option>
+                <option value="SICK">Maladie</option>
+                <option value="MATERNITY">Maternité</option>
+                <option value="PATERNITY">Paternité</option>
+                <option value="UNPAID">Sans solde</option>
+                <option value="OTHER">Autre</option>
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
