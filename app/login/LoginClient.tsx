@@ -139,7 +139,7 @@ export default function LoginClient() {
         </form>
 
         <p className="text-center text-caption text-secondary mt-6">
-          Version 2.0.0 · © 2026 Hyundai CO-TO AUTO
+          Version 1.0.0 · © 2026 Hyundai CO-TO AUTO
         </p>
       </div>
     </div>
