@@ -39,7 +39,36 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0f172a]">
+
+      {/* Orbes animés */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] animate-[drift1_12s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[450px] h-[450px] rounded-full bg-indigo-500/20 blur-[120px] animate-[drift2_15s_ease-in-out_infinite]" />
+        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] rounded-full bg-sky-400/10 blur-[100px] animate-[drift3_18s_ease-in-out_infinite]" />
+      </div>
+
+      {/* Grille subtile */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }}
+      />
+
+      <style>{`
+        @keyframes drift1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(40px, -30px) scale(1.05); }
+          66% { transform: translate(-20px, 40px) scale(0.97); }
+        }
+        @keyframes drift2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-50px, 30px) scale(1.08); }
+          66% { transform: translate(30px, -40px) scale(0.95); }
+        }
+        @keyframes drift3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-60px, -50px) scale(1.1); }
+        }
+      `}</style>
       <div className="bg-surface rounded-xl shadow-level-1 border border-outline-variant w-full max-w-md p-6">
         {/* Logo */}
         <div className="text-center mb-6">
