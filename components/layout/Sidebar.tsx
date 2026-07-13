@@ -20,8 +20,6 @@ const navGroups = [
     label: 'Temps & Présence',
     items: [
       { href: '/leaves', icon: 'event_busy', label: 'Congés & Absences' },
-      { href: '/attendance', icon: 'fingerprint', label: 'Pointage' },
-      { href: '/medical', icon: 'medical_services', label: 'Visites médicales' },
     ],
   },
   {

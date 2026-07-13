@@ -50,9 +50,7 @@ interface Employee {
   category: string | null
   contracts: Array<{ id: number; contractNo: string; type: string; status: string; startDate: string; endDate: string | null; salary: number; annualLeaveDays: number | null }>
   leaves: Array<{ id: number; type: string; startDate: string; endDate: string; status: string; reason: string | null }>
-  attendances: Array<{ id: number; date: string; checkIn: string | null; checkOut: string | null; isLate: boolean; absence: boolean; overtime: number | null }>
   trainings: Array<{ id: number; title: string; organization: string; date: string; certificate: boolean }>
-  medicals: Array<{ id: number; date: string; doctor: string | null; result: string | null; nextVisit: string | null }>
   documents: Array<{ id: number; name: string; type: string; category: string; expiryDate: string | null; status: string }>
   notes: Array<{ id: string; text: string; createdAt: string }> | null
 }
@@ -62,7 +60,6 @@ const TABS = [
   { id: 'personnel', label: 'Personnel' },
   { id: 'emploi', label: 'Emploi' },
   { id: 'conges', label: 'Congés' },
-  { id: 'temps', label: 'Temps & Présence' },
   { id: 'paie', label: 'Paie' },
   { id: 'documents', label: 'Documents' },
   { id: 'formations', label: 'Formations' },
@@ -643,114 +640,6 @@ function EmployeeDetailContent() {
     </div>
   )
 
-  // ── TEMPS & PRÉSENCE ────────────────────────────────────────────────────────
-  const nowDate = new Date()
-  const cm = nowDate.getMonth(), cy = nowDate.getFullYear()
-  const thisMonth = employee.attendances.filter(a => { const d = new Date(a.date); return d.getMonth() === cm && d.getFullYear() === cy })
-  const presentDays = thisMonth.filter(a => !a.absence).length
-  const workingDays = 23
-  const attendanceRate = presentDays > 0 ? Math.round((presentDays / workingDays) * 100) : 0
-  const totalHours = thisMonth.reduce((acc, a) => acc + (a.overtime || 0), 0)
-
-  const byMonth: Record<string, typeof employee.attendances> = {}
-  employee.attendances.forEach(a => {
-    const key = new Date(a.date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-    if (!byMonth[key]) byMonth[key] = []
-    byMonth[key].push(a)
-  })
-  const last12 = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(cy, cm - i, 1)
-    return d.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-  })
-
-  const tempsTab = (
-    <div className="space-y-4">
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-surface rounded-xl border border-outline-variant p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[15px] text-primary">schedule</span>
-            </div>
-            <p className="text-caption text-secondary">Heures ce mois</p>
-          </div>
-          <p className="text-[28px] font-bold text-on-surface leading-none">{totalHours}<span className="text-title-sm font-normal text-secondary ml-1">h</span></p>
-          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, Math.round((totalHours / (workingDays * 8)) * 100))}%` }} />
-          </div>
-          <p className="text-caption text-secondary mt-1">sur {workingDays * 8}h prévues</p>
-        </div>
-        <div className={`bg-surface rounded-xl border p-4 ${attendanceRate < 80 ? 'border-warning/50' : 'border-outline-variant'}`}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${attendanceRate < 80 ? 'bg-warning/10' : 'bg-tertiary/10'}`}>
-              <span className={`material-symbols-outlined text-[15px] ${attendanceRate < 80 ? 'text-warning' : 'text-tertiary'}`}>fingerprint</span>
-            </div>
-            <p className="text-caption text-secondary">Taux de présence</p>
-          </div>
-          <p className={`text-[28px] font-bold leading-none ${attendanceRate < 80 ? 'text-warning' : 'text-tertiary'}`}>{attendanceRate}<span className="text-title-sm font-normal ml-0.5">%</span></p>
-          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
-            <div className={`h-full rounded-full ${attendanceRate < 80 ? 'bg-warning' : 'bg-tertiary'}`} style={{ width: `${attendanceRate}%` }} />
-          </div>
-          <p className={`text-caption mt-1 ${attendanceRate < 80 ? 'text-warning' : 'text-secondary'}`}>{attendanceRate < 80 ? 'Sous l\'objectif (80%)' : 'Objectif atteint'}</p>
-        </div>
-        <div className="bg-surface rounded-xl border border-outline-variant p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-[15px] text-on-surface-variant">event_available</span>
-            </div>
-            <p className="text-caption text-secondary">Jours présents</p>
-          </div>
-          <p className="text-[28px] font-bold text-on-surface leading-none">{presentDays}<span className="text-title-sm font-normal text-secondary ml-1">j</span></p>
-          <div className="mt-2 h-1.5 bg-surface-container rounded-full overflow-hidden">
-            <div className="h-full bg-on-surface-variant rounded-full" style={{ width: `${Math.min(100, Math.round((presentDays / workingDays) * 100))}%` }} />
-          </div>
-          <p className="text-caption text-secondary mt-1">sur {workingDays} jours ouvrés</p>
-        </div>
-      </div>
-
-      {/* Historique mensuel */}
-      <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden">
-        <div className="px-4 py-3 border-b border-outline-variant">
-          <h3 className="text-body-md font-semibold text-on-surface">Historique de présence</h3>
-          <p className="text-caption text-secondary mt-0.5">12 derniers mois</p>
-        </div>
-        {employee.attendances.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-3">
-              <span className="material-symbols-outlined text-[22px] text-on-surface-variant">fingerprint</span>
-            </div>
-            <p className="text-body-md font-medium text-on-surface">Aucune donnée de présence</p>
-            <p className="text-caption text-secondary mt-1">Les pointages apparaîtront ici</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-outline-variant">
-            {last12.map(month => {
-              const entries = byMonth[month] || []
-              const p = entries.filter(a => !a.absence).length
-              const h = entries.reduce((acc, a) => acc + (a.overtime || 0), 0)
-              const r = entries.length > 0 ? Math.round((p / entries.length) * 100) : 0
-              return (
-                <div key={month} className="flex items-center gap-4 px-4 py-3 hover:bg-surface-container-lowest transition-colors">
-                  <p className="text-body-md capitalize text-on-surface w-28 flex-shrink-0">{month}</p>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-surface-container rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${r < 80 && r > 0 ? 'bg-warning' : 'bg-tertiary'}`} style={{ width: `${r}%` }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-caption text-secondary w-36 flex-shrink-0 justify-end">
-                    <span>{entries.length}j</span>
-                    <span>{h}h sup.</span>
-                    <span className={`font-medium w-8 text-right ${r > 0 && r < 80 ? 'text-warning' : r === 0 ? 'text-secondary' : 'text-tertiary'}`}>{r}%</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
   // ── PAIE ────────────────────────────────────────────────────────────────────
   const empBase = employee.baseSalary || 0
   const empTransport = employee.transportAllowance || 0
@@ -1023,7 +912,6 @@ function EmployeeDetailContent() {
     personnel: personnelTab,
     emploi: emploiTab,
     conges: congesTab,
-    temps: tempsTab,
     paie: paieTab,
     documents: documentsTab,
     formations: formationsTab,

@@ -185,12 +185,11 @@ export async function GET(req: NextRequest) {
 
   // ── CONGÉS & PRÉSENCE ──────────────────────────────────────────────────────
   if (type === 'conges') {
-    const [{ data: leaves }, { data: attendances }] = await Promise.all([
+    const [{ data: leaves }] = await Promise.all([
       sb.from('Leave').select('type,status,startDate,endDate,employeeId')
         .gte('startDate', yearStart).lte('startDate', yearEnd),
-      sb.from('Attendance').select('date,isLate,absence,overtime')
-        .gte('date', yearStart).lte('date', yearEnd),
     ])
+    const attendances: any[] = []
 
     // Leave KPIs
     const approved = (leaves ?? []).filter((l: any) => l.status === 'APPROVED')

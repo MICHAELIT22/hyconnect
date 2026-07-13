@@ -162,7 +162,7 @@ export default function DashboardClient() {
     plugins: { legend: { display: false } },
   }
 
-  const totalAlerts = trialEmployees.length + expiringContracts.length + upcomingMedical.length
+  const totalAlerts = trialEmployees.length + expiringContracts.length
 
   return (
     <div className="space-y-3">
@@ -273,12 +273,6 @@ export default function DashboardClient() {
               <div key={`exp-${i}`} className="px-3 py-1.5 text-body-md flex justify-between">
                 <span>{c.employee.firstName} {c.employee.lastName}</span>
                 <span className="text-caption text-secondary">Contrat fin {new Date(c.endDate).toLocaleDateString()}</span>
-              </div>
-            ))}
-            {upcomingMedical.map((m, i) => (
-              <div key={`med-${i}`} className="px-3 py-1.5 text-body-md flex justify-between">
-                <span>{m.employee.firstName} {m.employee.lastName}</span>
-                <span className="text-caption text-secondary">Visite {new Date(m.nextVisit).toLocaleDateString()}</span>
               </div>
             ))}
           </div>

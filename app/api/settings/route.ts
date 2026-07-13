@@ -202,9 +202,7 @@ export async function POST(req: NextRequest) {
     const authCheck = await requireRole(['ADMIN'])
     if (authCheck instanceof NextResponse) return authCheck
 
-    await sb.from('Attendance').delete().neq('id', 0)
     await sb.from('Leave').delete().neq('id', 0)
-    await sb.from('MedicalVisit').delete().neq('id', 0)
     await sb.from('Training').delete().neq('id', 0)
     await sb.from('Document').delete().neq('id', 0)
     await sb.from('Contract').delete().neq('id', 0)

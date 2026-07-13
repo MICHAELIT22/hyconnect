@@ -51,13 +51,11 @@ export async function GET() {
       { count: trainingsUpcoming },
       { data: trialEmployees },
       { data: expiringContractsRaw },
-      { data: upcomingMedical },
     ] = await Promise.all([
       sb.from('Training').select('id', { count: 'exact', head: true }).gte('date', startOfYear).lte('date', nowIso),
       sb.from('Training').select('id', { count: 'exact', head: true }).gt('date', nowIso),
       sb.from('Contract').select('trialEndDate, Employee(firstName, lastName)').eq('status', 'ACTIVE').gte('trialEndDate', nowIso).lte('trialEndDate', thirtyDaysLater).limit(5),
       sb.from('Contract').select('endDate, Employee(firstName, lastName)').eq('status', 'ACTIVE').gte('endDate', nowIso).lte('endDate', thirtyDaysLater).order('endDate').limit(5),
-      sb.from('MedicalVisit').select('nextVisit, Employee(firstName, lastName)').gte('nextVisit', nowIso).lte('nextVisit', thirtyDaysLater).order('nextVisit').limit(5),
     ])
 
     // Batch 4: employees for buckets + recent hires
@@ -174,7 +172,7 @@ export async function GET() {
       leavesApproved: leavesApproved || 0,
       trainingsThisYear: trainingsThisYear || 0,
       trainingsUpcoming: trainingsUpcoming || 0,
-      upcomingMedical: (upcomingMedical || []).map((m: any) => ({ employee: m.Employee, nextVisit: m.nextVisit })),
+      upcomingMedical: [],
       recentActivity,
       headcountEvolution,
       genderDistribution,

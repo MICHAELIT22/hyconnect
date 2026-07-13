@@ -14,12 +14,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!employee) return NextResponse.json({ error: 'Employé non trouvé' }, { status: 404 })
 
-  const [contracts, leaves, attendance, trainings, medicals, documents] = await Promise.all([
+  const [contracts, leaves, trainings, documents] = await Promise.all([
     sb.from('Contract').select('*').eq('employeeId', empId).order('createdAt', { ascending: false }),
     sb.from('Leave').select('*').eq('employeeId', empId).order('createdAt', { ascending: false }).limit(10),
-    sb.from('Attendance').select('id,date,checkIn,checkOut,isLate,absence,overtime').eq('employeeId', empId).order('date', { ascending: false }).limit(30),
     sb.from('Training').select('*').eq('employeeId', empId).order('date', { ascending: false }),
-    sb.from('MedicalVisit').select('*').eq('employeeId', empId).order('date', { ascending: false }),
     sb.from('Document').select('*').eq('employeeId', empId).order('createdAt', { ascending: false }),
   ])
 
@@ -27,9 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     ...employee,
     contracts: contracts.data ?? [],
     leaves: leaves.data ?? [],
-    attendances: attendance.data ?? [],
     trainings: trainings.data ?? [],
-    medicals: medicals.data ?? [],
     documents: documents.data ?? [],
   })
 }
