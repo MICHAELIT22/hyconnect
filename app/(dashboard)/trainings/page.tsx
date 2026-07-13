@@ -18,6 +18,7 @@ interface Training {
 const CATEGORIES = ['Technique', 'Management', 'Sécurité', 'Informatique', 'Autre']
 
 const emptyForm = { employeeId: '', title: '', organization: '', date: '', duration: '', cost: '', category: '', certificate: false }
+const ic = 'w-full px-3 py-1.5 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
 
 export default function TrainingsPage() {
   const [trainings, setTrainings] = useState<Training[]>([])
