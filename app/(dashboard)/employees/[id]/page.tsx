@@ -122,6 +122,18 @@ function EmployeeDetailContent() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  // Départ modal
+  const [showDepart, setShowDepart] = useState(false)
+  const [depart, setDepart] = useState({
+    terminationDate: new Date().toISOString().split('T')[0],
+    lastWorkDay: new Date().toISOString().split('T')[0],
+    reason: '',
+    notes: '',
+    cancelContracts: true,
+  })
+  const [departSaving, setDepartSaving] = useState(false)
+  const [departError, setDepartError] = useState('')
+
   const load = () => {
     setLoading(true)
     axios.get(`/api/employees/${id}`)
@@ -141,6 +153,34 @@ function EmployeeDetailContent() {
 
   const startEdit = () => { setForm({ ...employee }); setEditMode(true) }
   const cancelEdit = () => { setEditMode(false); setSaveError('') }
+
+  const confirmDepart = async () => {
+    setDepartSaving(true)
+    setDepartError('')
+    try {
+      // 1. Mark employee INACTIVE
+      await axios.put(`/api/employees/${id}`, {
+        status: 'INACTIVE',
+        probationEndDate: depart.terminationDate,
+      })
+      // 2. Cancel active contracts if requested
+      if (depart.cancelContracts && employee) {
+        const activeContracts = employee.contracts.filter((c: any) => c.status === 'ACTIVE')
+        await Promise.all(activeContracts.map((c: any) =>
+          axios.put(`/api/contracts/${c.id}`, {
+            status: 'CANCELLED',
+            endDate: depart.terminationDate,
+          })
+        ))
+      }
+      setShowDepart(false)
+      load()
+    } catch (e: any) {
+      setDepartError(e.response?.data?.error || 'Erreur lors du traitement du départ')
+    } finally {
+      setDepartSaving(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -641,6 +681,7 @@ function EmployeeDetailContent() {
   }
 
   return (
+    <>
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -669,10 +710,15 @@ function EmployeeDetailContent() {
               <span className="material-symbols-outlined text-[13px]">edit</span>
               Modifier
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-md border border-error text-error hover:bg-error-container transition-all flex-shrink-0">
-              <span className="material-symbols-outlined text-[13px]">exit_to_app</span>
-              Départ de l'employé
-            </button>
+            {employee.status === 'ACTIVE' && (
+              <button
+                onClick={() => { setDepartError(''); setShowDepart(true) }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-md border border-error text-error hover:bg-error-container transition-all flex-shrink-0"
+              >
+                <span className="material-symbols-outlined text-[13px]">exit_to_app</span>
+                Départ de l'employé
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -709,6 +755,113 @@ function EmployeeDetailContent() {
 
       {tabContent[activeTab]}
     </div>
+
+    {/* ── Modal Départ ────────────────────────────────────────────────────── */}
+    {showDepart && (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <div className="bg-surface rounded-2xl shadow-level-3 w-full max-w-md">
+          <div className="flex items-start justify-between p-5 border-b border-outline-variant">
+            <div>
+              <h2 className="text-title-md font-semibold text-on-surface">Départ de l'employé</h2>
+              <p className="text-caption text-secondary mt-0.5">
+                Ceci marquera l'employé comme ancien employé, désactivera son compte et résiliera optionnellement tous les contrats actifs.
+              </p>
+            </div>
+            <button onClick={() => setShowDepart(false)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-surface-container ml-3 flex-shrink-0">
+              <span className="material-symbols-outlined text-[18px] text-secondary">close</span>
+            </button>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {departError && (
+              <div className="bg-error-container text-on-error-container p-3 rounded-lg text-body-md">{departError}</div>
+            )}
+
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Date de résiliation *</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-secondary">calendar_today</span>
+                <input
+                  type="date"
+                  value={depart.terminationDate}
+                  onChange={e => setDepart(d => ({ ...d, terminationDate: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Dernier jour de travail</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-secondary">calendar_today</span>
+                <input
+                  type="date"
+                  value={depart.lastWorkDay}
+                  onChange={e => setDepart(d => ({ ...d, lastWorkDay: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Motif</label>
+              <select
+                value={depart.reason}
+                onChange={e => setDepart(d => ({ ...d, reason: e.target.value }))}
+                className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Sélectionner le motif</option>
+                <option value="Démission">Démission</option>
+                <option value="Licenciement économique">Licenciement économique</option>
+                <option value="Licenciement pour faute">Licenciement pour faute</option>
+                <option value="Fin de contrat CDD">Fin de contrat CDD</option>
+                <option value="Retraite">Retraite</option>
+                <option value="Rupture conventionnelle">Rupture conventionnelle</option>
+                <option value="Décès">Décès</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-label-md text-on-surface-variant mb-1.5">Notes</label>
+              <textarea
+                value={depart.notes}
+                onChange={e => setDepart(d => ({ ...d, notes: e.target.value }))}
+                placeholder="Notes supplémentaires sur le départ..."
+                rows={3}
+                className="w-full px-3 py-2.5 border border-outline-variant rounded-lg text-body-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+              />
+            </div>
+
+            <label className="flex items-center justify-between p-3 border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container transition-colors">
+              <span className="text-body-md text-on-surface">
+                Résilier aussi tous les contrats actifs ({employee.contracts.filter((c: any) => c.status === 'ACTIVE').length} actif(s))
+              </span>
+              <button
+                type="button"
+                onClick={() => setDepart(d => ({ ...d, cancelContracts: !d.cancelContracts }))}
+                className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${depart.cancelContracts ? 'bg-primary' : 'bg-outline-variant'}`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${depart.cancelContracts ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </button>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 px-5 py-4 border-t border-outline-variant">
+            <button onClick={() => setShowDepart(false)} className="btn-secondary">Annuler</button>
+            <button
+              onClick={confirmDepart}
+              disabled={departSaving || !depart.terminationDate}
+              className="flex items-center gap-2 px-4 py-2 bg-error text-on-error rounded-lg text-label-md font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {departSaving && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Confirmer le départ
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
